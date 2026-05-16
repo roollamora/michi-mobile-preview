@@ -158,6 +158,7 @@
   let mobileMenuEligible = false;
   let mobileArticleBaseStart = 0;
   let cachedMobileWelcomeEnd = 0;
+  let cachedMobileTransitionStart = 0;
 
   // Single snap state machine - animated travel + forced hold, no half-states.
   let snapArmed = true;
@@ -227,15 +228,24 @@
     window.requestAnimationFrame(snapTick);
   }
 
-  function evaluateSnap(triggerAbs, targetAbs) {
+  function evaluateSnap(zoneStartAbs, zoneEndAbs) {
     if (snapLocked()) return;
     const curr = window.scrollY;
-    if (snapArmed && prevScrollY < triggerAbs && curr >= triggerAbs) {
+    if (snapArmed && prevScrollY < zoneStartAbs && curr >= zoneStartAbs) {
+      // Entered transition zone going down → snap to end
       snapArmed = false;
-      startSnap(targetAbs);
+      startSnap(zoneEndAbs);
       return;
     }
-    if (curr < triggerAbs - 80) snapArmed = true;
+    if (snapArmed && prevScrollY > zoneEndAbs && curr <= zoneEndAbs) {
+      // Entered transition zone going up → snap to start
+      snapArmed = false;
+      startSnap(zoneStartAbs);
+      return;
+    }
+    if (curr < zoneStartAbs - 80 || curr > zoneEndAbs + 80) {
+      snapArmed = true;
+    }
   }
 
   function blockIfLocked(e) {
@@ -561,6 +571,7 @@
       null
     );
     const welcomeFadeStart = 220 + requiredWelcomeScroll + extraWelcomeRunway;
+    cachedMobileTransitionStart = welcomeFadeStart;
     const welcomeFade = clamp01((y - welcomeFadeStart) / 260);
     setOpacity(layers.rightGrey, 0.94 * (1 - welcomeFade));
     layers.greeting.style.zIndex = "18";
@@ -675,12 +686,15 @@
   function render() {
     const sceneTop = scene.offsetTop;
     const mobile = isMobileLayout();
+    const transitionStart = mobile
+      ? cachedMobileTransitionStart || transitionPx * 0.4
+      : transitionPx * 0.12;
     const transitionEnd = mobile
       ? cachedMobileWelcomeEnd || transitionPx
-      : transitionPx;
-    const snapTrigger = sceneTop + transitionEnd * 0.5;
-    const snapTarget = sceneTop + transitionEnd + (mobile ? 0 : DESKTOP_ARTICLE_PADDING_TOP);
-    evaluateSnap(snapTrigger, snapTarget);
+      : transitionPx + DESKTOP_ARTICLE_PADDING_TOP;
+    const zoneStartAbs = sceneTop + transitionStart;
+    const zoneEndAbs = sceneTop + transitionEnd;
+    evaluateSnap(zoneStartAbs, zoneEndAbs);
     prevScrollY = window.scrollY;
 
     if (mobile) {
@@ -864,6 +878,7 @@
 
   window.addEventListener("resize", () => {
     cachedMobileWelcomeEnd = 0;
+    cachedMobileTransitionStart = 0;
     snapArmed = true;
     snapPhase = "idle";
     updateSceneHeight();
