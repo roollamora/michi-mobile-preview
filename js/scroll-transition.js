@@ -157,6 +157,8 @@
   let mobileMenuOpen = false;
   let mobileMenuEligible = false;
   let mobileArticleScrollStart = 0;
+  let lastMobileY = 0;
+  let mobileSnapArmed = true;
 
   const prefersReduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
   const clamp01 = (v) => Math.max(0, Math.min(1, v));
@@ -504,6 +506,15 @@
     const articleScrollStart =
       transitionPx + 120 + extraWelcomeRunway + requiredWelcomeScroll + extraWelcomeHold;
     mobileArticleScrollStart = articleScrollStart;
+    if (mobileSnapArmed && lastMobileY < articleScrollStart && y >= articleScrollStart) {
+      window.scrollTo({ top: sceneTop + articleScrollStart, behavior: "auto" });
+      lastMobileY = articleScrollStart;
+      mobileSnapArmed = false;
+      return;
+    }
+    if (y < articleScrollStart - 32) {
+      mobileSnapArmed = true;
+    }
     const articleActive = y >= articleScrollStart;
     setOpacity(layers.article, articleActive ? 1 : 0);
     layers.article.style.zIndex = "9";
@@ -572,6 +583,7 @@
     if (!(mobileMenuEligible && mobileMenuOpen)) {
       document.body.classList.remove("menu-open");
     }
+    lastMobileY = y;
   }
 
   function render() {
