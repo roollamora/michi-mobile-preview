@@ -433,6 +433,7 @@
     const welcomeTop = heroHeight;
     const greetingX = 5;
     setRectPx(layers.greeting, greetingX, welcomeTop, window.innerWidth - 10, null);
+    layers.greeting.style.whiteSpace = "normal";
     const greetingHeight = layers.greeting.getBoundingClientRect().height || 52;
     setRectPx(
       layers.intro,
@@ -578,6 +579,7 @@
     lerpTitleTypography(p);
 
     const greetingRect = applyRect("greeting", layers.greeting, p, { height: false });
+    layers.greeting.style.whiteSpace = "nowrap";
     const introRect = applyRect("intro", layers.intro, p, { height: false });
     if (greetingRect && introRect && layers.greeting && layers.intro) {
       const greetingHeight = layers.greeting.getBoundingClientRect().height;
