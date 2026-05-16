@@ -160,17 +160,6 @@
   let cachedMobileWelcomeEnd = 0;
   let cachedMobileTransitionStart = 0;
 
-  // Single snap state machine - animated travel + forced hold, no half-states.
-  let snapArmed = true;
-  let snapPhase = "idle"; // "idle" | "travel" | "hold"
-  let snapFromY = 0;
-  let snapToY = 0;
-  let snapStartTime = 0;
-  let snapHoldUntil = 0;
-  const SNAP_TRAVEL_MS = 360;
-  const SNAP_HOLD_MS = 280;
-  let prevScrollY = 0;
-
   const prefersReduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
   const clamp01 = (v) => Math.max(0, Math.min(1, v));
   const lerp = (a, b, t) => a + (b - a) * t;
@@ -183,82 +172,122 @@
   const scaleMin = () => Math.min(scaleX(), scaleY());
   const sx = (v) => v * scaleX();
   const sy = (v) => v * scaleY();
-
   const easeOutQuad = (t) => 1 - (1 - t) * (1 - t);
 
-  function snapLocked() {
-    return snapPhase !== "idle";
+  // Page state machine. Transition is OWNED by time, not scroll.
+  // Scroll only governs WELCOME and ARTICLE phases.
+  const STATE_WELCOME = "welcome";
+  const STATE_TRANSITIONING = "transitioning";
+  const STATE_ARTICLE = "article";
+  let pageState = STATE_WELCOME;
+  let transitionT = 0;
+  let transitionDir = 1; // 1 = welcome→article, -1 = article→welcome
+  let transitionPhase = "idle"; // "idle" | "anim" | "hold"
+  let transitionStartTime = 0;
+  let transitionHoldUntil = 0;
+  let transitionRaf = 0;
+  const TRANSITION_ANIM_MS = 520;
+  const TRANSITION_HOLD_MS = 320;
+  let prevScrollY = 0;
+
+  function getZoneStart() {
+    return isMobileLayout()
+      ? cachedMobileTransitionStart || transitionPx * 0.5
+      : transitionPx * 0.12;
+  }
+  function getZoneEnd() {
+    return isMobileLayout()
+      ? cachedMobileWelcomeEnd || transitionPx
+      : transitionPx + DESKTOP_ARTICLE_PADDING_TOP;
+  }
+  function transitionLocked() {
+    return transitionPhase !== "idle";
   }
 
-  function snapTick(now) {
-    if (snapPhase === "idle") return;
-    if (snapPhase === "travel") {
-      const elapsed = now - snapStartTime;
-      if (elapsed >= SNAP_TRAVEL_MS) {
-        window.scrollTo(0, snapToY);
-        snapPhase = "hold";
-        snapHoldUntil = now + SNAP_HOLD_MS;
-        window.requestAnimationFrame(snapTick);
+  // y value used by rendering. In transitioning phase this is time-driven,
+  // so the layout reaches end-state regardless of actual scrollY.
+  function getRenderY() {
+    if (transitionLocked()) {
+      const a = getZoneStart();
+      const b = getZoneEnd();
+      return a + (b - a) * transitionT;
+    }
+    return Math.max(0, window.scrollY - scene.offsetTop);
+  }
+
+  function lockedScrollTargetAbs() {
+    const sceneTop = scene.offsetTop;
+    if (transitionDir === 1) return sceneTop + getZoneStart();
+    return sceneTop + getZoneEnd();
+  }
+
+  function endScrollTargetAbs() {
+    const sceneTop = scene.offsetTop;
+    if (transitionDir === 1) return sceneTop + getZoneEnd();
+    return sceneTop + Math.max(0, getZoneStart() - 1);
+  }
+
+  function transitionTick(now) {
+    if (transitionPhase === "idle") return;
+    if (transitionPhase === "anim") {
+      const elapsed = now - transitionStartTime;
+      const linearT = Math.min(1, elapsed / TRANSITION_ANIM_MS);
+      const easedT = easeOutQuad(linearT);
+      transitionT = transitionDir === 1 ? easedT : 1 - easedT;
+      // Pin scroll at start anchor during animation
+      const lock = lockedScrollTargetAbs();
+      if (Math.abs(window.scrollY - lock) > 1) window.scrollTo(0, lock);
+      render();
+      if (linearT >= 1) {
+        transitionPhase = "hold";
+        transitionHoldUntil = now + TRANSITION_HOLD_MS;
+        // Move scroll to final position so subsequent state has correct math
+        window.scrollTo(0, endScrollTargetAbs());
+      }
+      transitionRaf = window.requestAnimationFrame(transitionTick);
+      return;
+    }
+    if (transitionPhase === "hold") {
+      const target = endScrollTargetAbs();
+      if (Math.abs(window.scrollY - target) > 1) window.scrollTo(0, target);
+      render();
+      if (now >= transitionHoldUntil) {
+        transitionPhase = "idle";
+        pageState = transitionDir === 1 ? STATE_ARTICLE : STATE_WELCOME;
+        prevScrollY = window.scrollY;
+        transitionRaf = 0;
         return;
       }
-      const t = easeOutQuad(elapsed / SNAP_TRAVEL_MS);
-      const y = snapFromY + (snapToY - snapFromY) * t;
-      window.scrollTo(0, y);
-      window.requestAnimationFrame(snapTick);
-      return;
-    }
-    if (snapPhase === "hold") {
-      if (Math.abs(window.scrollY - snapToY) > 1) {
-        window.scrollTo(0, snapToY);
-      }
-      if (now >= snapHoldUntil) {
-        snapPhase = "idle";
-        prevScrollY = snapToY;
-        return;
-      }
-      window.requestAnimationFrame(snapTick);
+      transitionRaf = window.requestAnimationFrame(transitionTick);
     }
   }
 
-  function startSnap(targetAbs) {
-    snapFromY = window.scrollY;
-    snapToY = targetAbs;
-    snapStartTime = performance.now();
-    snapPhase = "travel";
-    window.requestAnimationFrame(snapTick);
+  function startTransition(direction) {
+    if (transitionLocked()) return;
+    transitionDir = direction;
+    transitionT = direction === 1 ? 0 : 1;
+    transitionStartTime = performance.now();
+    transitionPhase = "anim";
+    pageState = STATE_TRANSITIONING;
+    // Pin scroll immediately so user can't keep flicking past
+    window.scrollTo(0, lockedScrollTargetAbs());
+    if (transitionRaf) window.cancelAnimationFrame(transitionRaf);
+    transitionRaf = window.requestAnimationFrame(transitionTick);
   }
 
-  function evaluateSnap(zoneStartAbs, zoneEndAbs) {
-    if (snapLocked()) return;
-    const curr = window.scrollY;
-    if (snapArmed && prevScrollY < zoneStartAbs && curr >= zoneStartAbs) {
-      // Entered transition zone going down → snap to end
-      snapArmed = false;
-      startSnap(zoneEndAbs);
-      return;
-    }
-    if (snapArmed && prevScrollY > zoneEndAbs && curr <= zoneEndAbs) {
-      // Entered transition zone going up → snap to start
-      snapArmed = false;
-      startSnap(zoneStartAbs);
-      return;
-    }
-    if (curr < zoneStartAbs - 80 || curr > zoneEndAbs + 80) {
-      snapArmed = true;
-    }
-  }
-
-  function blockIfLocked(e) {
-    if (!snapLocked()) return;
+  // Input blockers - kill any user-initiated movement while locked.
+  function killInput(e) {
+    if (!transitionLocked()) return;
     e.preventDefault();
     e.stopPropagation();
   }
-  window.addEventListener("wheel", blockIfLocked, { passive: false, capture: true });
-  window.addEventListener("touchmove", blockIfLocked, { passive: false, capture: true });
+  window.addEventListener("wheel", killInput, { passive: false, capture: true });
+  window.addEventListener("touchmove", killInput, { passive: false, capture: true });
+  window.addEventListener("touchstart", killInput, { passive: false, capture: true });
   window.addEventListener(
     "keydown",
     (e) => {
-      if (!snapLocked()) return;
+      if (!transitionLocked()) return;
       const blocked = new Set([
         "ArrowUp",
         "ArrowDown",
@@ -491,7 +520,7 @@
   function renderMobile() {
     document.body.classList.add("mobile-layout");
     const sceneTop = scene.offsetTop;
-    const y = Math.max(0, window.scrollY - sceneTop);
+    const y = getRenderY();
     const heroShrink = clamp01(y / 320);
     const extraWelcomeRunway = window.innerHeight * 0.5;
     const ribbonHeight = Math.max(96, window.innerHeight * 0.18);
@@ -686,15 +715,21 @@
   function render() {
     const sceneTop = scene.offsetTop;
     const mobile = isMobileLayout();
-    const transitionStart = mobile
-      ? cachedMobileTransitionStart || transitionPx * 0.4
-      : transitionPx * 0.12;
-    const transitionEnd = mobile
-      ? cachedMobileWelcomeEnd || transitionPx
-      : transitionPx + DESKTOP_ARTICLE_PADDING_TOP;
-    const zoneStartAbs = sceneTop + transitionStart;
-    const zoneEndAbs = sceneTop + transitionEnd;
-    evaluateSnap(zoneStartAbs, zoneEndAbs);
+
+    // State-machine: trigger forward/backward transition once per crossing.
+    if (!transitionLocked()) {
+      const realY = Math.max(0, window.scrollY - sceneTop);
+      const zStart = getZoneStart();
+      const zEnd = getZoneEnd();
+      if (pageState === STATE_WELCOME && realY >= zStart) {
+        startTransition(1);
+        return;
+      }
+      if (pageState === STATE_ARTICLE && realY <= zEnd - 40) {
+        startTransition(-1);
+        return;
+      }
+    }
     prevScrollY = window.scrollY;
 
     if (mobile) {
@@ -722,7 +757,7 @@
     ].forEach((el) => {
       if (el) el.style.zIndex = "";
     });
-    const y = Math.max(0, window.scrollY - sceneTop);
+    const y = getRenderY();
     const raw = clamp01(y / transitionPx);
     const p = prefersReduced ? (raw >= 0.5 ? 1 : 0) : ease(raw);
     lastProgress = p;
@@ -833,6 +868,10 @@
       forcedIndex = index;
       updateCutout(index);
       const sectionTarget = Math.max(0, target.offsetTop);
+      // Force article state so scrolling won't re-trigger transition.
+      pageState = STATE_ARTICLE;
+      transitionT = 1;
+      transitionPhase = "idle";
       window.scrollTo({
         top: scene.offsetTop + transitionPx + sectionTarget,
         behavior: prefersReduced ? "auto" : "smooth",
@@ -857,9 +896,12 @@
         const id = link.getAttribute("href")?.slice(1);
         const target = id ? document.getElementById(id) : null;
         const sectionTarget = target ? target.offsetTop : index * 220;
-        const mobileAnchorOffset = 0;
+        // Force article state so the scroll won't re-trigger the transition.
+        pageState = STATE_ARTICLE;
+        transitionT = 1;
+        transitionPhase = "idle";
         window.scrollTo({
-          top: scene.offsetTop + mobileArticleBaseStart + mobileAnchorOffset + Math.max(0, sectionTarget),
+          top: scene.offsetTop + mobileArticleBaseStart + Math.max(0, sectionTarget),
           behavior: prefersReduced ? "auto" : "smooth",
         });
         mobileMenuOpen = false;
@@ -879,9 +921,20 @@
   window.addEventListener("resize", () => {
     cachedMobileWelcomeEnd = 0;
     cachedMobileTransitionStart = 0;
-    snapArmed = true;
-    snapPhase = "idle";
+    transitionPhase = "idle";
+    if (transitionRaf) {
+      window.cancelAnimationFrame(transitionRaf);
+      transitionRaf = 0;
+    }
     updateSceneHeight();
+    const realY = Math.max(0, window.scrollY - scene.offsetTop);
+    if (realY >= getZoneEnd() - 40) {
+      pageState = STATE_ARTICLE;
+      transitionT = 1;
+    } else {
+      pageState = STATE_WELCOME;
+      transitionT = 0;
+    }
     render();
   });
   window.addEventListener("scroll", render, { passive: true });
