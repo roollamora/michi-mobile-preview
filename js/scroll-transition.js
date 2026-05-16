@@ -160,6 +160,9 @@
   let mobileArticleBaseStart = 0;
   let lastMobileY = 0;
   let mobileSnapArmed = true;
+  let mobileSnapInProgress = false;
+  let mobileSnapTargetAbs = 0;
+  let mobileSnapRaf = 0;
 
   const prefersReduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
   const clamp01 = (v) => Math.max(0, Math.min(1, v));
@@ -173,6 +176,32 @@
   const scaleMin = () => Math.min(scaleX(), scaleY());
   const sx = (v) => v * scaleX();
   const sy = (v) => v * scaleY();
+
+  function tickMobileSnap() {
+    if (!mobileSnapInProgress) return;
+    const currentAbs = window.scrollY;
+    const delta = mobileSnapTargetAbs - currentAbs;
+    if (Math.abs(delta) <= 2) {
+      window.scrollTo({ top: mobileSnapTargetAbs, behavior: "auto" });
+      mobileSnapInProgress = false;
+      if (mobileSnapRaf) {
+        window.cancelAnimationFrame(mobileSnapRaf);
+        mobileSnapRaf = 0;
+      }
+      return;
+    }
+    const step = Math.sign(delta) * Math.max(14, Math.abs(delta) * 0.24);
+    window.scrollTo({ top: currentAbs + step, behavior: "auto" });
+    mobileSnapRaf = window.requestAnimationFrame(tickMobileSnap);
+  }
+
+  function startMobileSnap(targetAbs) {
+    mobileSnapTargetAbs = targetAbs;
+    if (mobileSnapInProgress) return;
+    mobileSnapInProgress = true;
+    if (mobileSnapRaf) window.cancelAnimationFrame(mobileSnapRaf);
+    mobileSnapRaf = window.requestAnimationFrame(tickMobileSnap);
+  }
 
   const titleSpans = [...layers.heroTitle.querySelectorAll("span")];
   const titleMetrics = titleSpans.map((span) => {
@@ -511,10 +540,9 @@
     mobileArticleScrollStart = articleScrollStart;
     mobileArticleBaseStart = articleBaseStart;
     if (mobileSnapArmed && lastMobileY < articleScrollStart && y >= articleScrollStart) {
-      window.scrollTo({ top: sceneTop + articleBaseStart, behavior: "auto" });
+      startMobileSnap(sceneTop + articleBaseStart);
       lastMobileY = articleBaseStart;
       mobileSnapArmed = false;
-      return;
     }
     if (y < articleScrollStart - 32) {
       mobileSnapArmed = true;
@@ -586,6 +614,10 @@
     }
     if (!(mobileMenuEligible && mobileMenuOpen)) {
       document.body.classList.remove("menu-open");
+    }
+    if (!mobileSnapInProgress && mobileSnapRaf) {
+      window.cancelAnimationFrame(mobileSnapRaf);
+      mobileSnapRaf = 0;
     }
     lastMobileY = y;
   }
