@@ -187,18 +187,23 @@
   let transitionHoldUntil = 0;
   let transitionRaf = 0;
   const TRANSITION_ANIM_MS = 520;
-  const TRANSITION_HOLD_MS = 320;
+  const TRANSITION_HOLD_MS = 720;
   /** Captured document scroll when transition starts — one continuous scroll to destination */
   let transitionScrollFromAbs = 0;
   let transitionScrollToAbs = 0;
+  /** Frozen scene-relative zone bounds for entire transition — prevents endpoint drift mid-morph */
+  let frozenZoneStartRel = null;
+  let frozenZoneEndRel = null;
   let prevScrollY = 0;
 
   function getZoneStart() {
+    if (transitionLocked() && frozenZoneStartRel != null) return frozenZoneStartRel;
     return isMobileLayout()
       ? cachedMobileTransitionStart || transitionPx * 0.5
       : transitionPx * 0.12;
   }
   function getZoneEnd() {
+    if (transitionLocked() && frozenZoneEndRel != null) return frozenZoneEndRel;
     return isMobileLayout()
       ? cachedMobileWelcomeEnd || transitionPx
       : transitionPx + DESKTOP_ARTICLE_PADDING_TOP;
@@ -216,12 +221,6 @@
       return a + (b - a) * transitionT;
     }
     return Math.max(0, window.scrollY - scene.offsetTop);
-  }
-
-  function endScrollTargetAbs() {
-    const sceneTop = scene.offsetTop;
-    if (transitionDir === 1) return sceneTop + getZoneEnd();
-    return sceneTop + Math.max(0, getZoneStart() - 1);
   }
 
   function transitionTick(now) {
@@ -249,7 +248,15 @@
       render();
       if (now >= transitionHoldUntil) {
         transitionPhase = "idle";
-        pageState = transitionDir === 1 ? STATE_ARTICLE : STATE_WELCOME;
+        const dirDone = transitionDir;
+        const syncStart = frozenZoneStartRel;
+        const syncEnd = frozenZoneEndRel;
+        frozenZoneStartRel = null;
+        frozenZoneEndRel = null;
+        if (dirDone === 1 && syncEnd != null) cachedMobileWelcomeEnd = syncEnd;
+        if (dirDone === 1 && syncStart != null) cachedMobileTransitionStart = syncStart;
+        if (dirDone === -1 && syncStart != null) cachedMobileTransitionStart = syncStart;
+        pageState = dirDone === 1 ? STATE_ARTICLE : STATE_WELCOME;
         prevScrollY = window.scrollY;
         transitionRaf = 0;
         return;
@@ -263,10 +270,16 @@
     transitionDir = direction;
     transitionT = direction === 1 ? 0 : 1;
     transitionStartTime = performance.now();
-    transitionPhase = "anim";
     pageState = STATE_TRANSITIONING;
+    frozenZoneStartRel = getZoneStart();
+    frozenZoneEndRel = getZoneEnd();
+    transitionPhase = "anim";
     transitionScrollFromAbs = window.scrollY;
-    transitionScrollToAbs = endScrollTargetAbs();
+    const sceneTop = scene.offsetTop;
+    transitionScrollToAbs =
+      direction === 1
+        ? sceneTop + frozenZoneEndRel
+        : sceneTop + Math.max(0, frozenZoneStartRel - 1);
     if (transitionRaf) window.cancelAnimationFrame(transitionRaf);
     transitionRaf = window.requestAnimationFrame(transitionTick);
   }
@@ -596,7 +609,9 @@
       null
     );
     const welcomeFadeStart = 220 + requiredWelcomeScroll + extraWelcomeRunway;
-    cachedMobileTransitionStart = welcomeFadeStart;
+    if (!transitionLocked()) {
+      cachedMobileTransitionStart = welcomeFadeStart;
+    }
     const welcomeFade = clamp01((y - welcomeFadeStart) / 260);
     setOpacity(layers.rightGrey, 0.94 * (1 - welcomeFade));
     layers.greeting.style.zIndex = "18";
@@ -637,16 +652,20 @@
       articleHeight
     );
     const articleBaseStart = 120 + requiredWelcomeScroll + extraWelcomeRunway + extraWelcomeHold;
-    mobileArticleBaseStart = articleBaseStart;
-    cachedMobileWelcomeEnd = articleBaseStart;
-    const articleActive = y >= articleBaseStart;
+    const stableArticleBase =
+      transitionLocked() && frozenZoneEndRel != null ? frozenZoneEndRel : articleBaseStart;
+    mobileArticleBaseStart = stableArticleBase;
+    if (!transitionLocked()) {
+      cachedMobileWelcomeEnd = articleBaseStart;
+    }
+    const articleActive = y >= stableArticleBase;
     setOpacity(layers.article, articleActive ? 1 : 0);
     layers.article.style.zIndex = "9";
     const articleOffset = articleActive
-      ? Math.max(0, Math.min(articleScrollMax, y - articleBaseStart))
+      ? Math.max(0, Math.min(articleScrollMax, y - stableArticleBase))
       : 0;
     articleInner.style.transform = `translateY(${-articleOffset}px)`;
-    scene.style.minHeight = `${articleBaseStart + articleScrollMax + window.innerHeight * 0.35}px`;
+    scene.style.minHeight = `${stableArticleBase + articleScrollMax + window.innerHeight * 0.35}px`;
 
     setRectPx(layers.footerBar, 0, ribbonLineTop, window.innerWidth, 2);
     setRectPx(layers.footerBg, 0, window.innerHeight - ribbonHeight, window.innerWidth, ribbonHeight);
@@ -917,6 +936,8 @@
   window.addEventListener("resize", () => {
     cachedMobileWelcomeEnd = 0;
     cachedMobileTransitionStart = 0;
+    frozenZoneStartRel = null;
+    frozenZoneEndRel = null;
     transitionPhase = "idle";
     if (transitionRaf) {
       window.cancelAnimationFrame(transitionRaf);
