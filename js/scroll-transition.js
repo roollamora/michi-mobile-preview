@@ -188,6 +188,9 @@
   let transitionRaf = 0;
   const TRANSITION_ANIM_MS = 520;
   const TRANSITION_HOLD_MS = 320;
+  /** Captured document scroll when transition starts — one continuous scroll to destination */
+  let transitionScrollFromAbs = 0;
+  let transitionScrollToAbs = 0;
   let prevScrollY = 0;
 
   function getZoneStart() {
@@ -215,12 +218,6 @@
     return Math.max(0, window.scrollY - scene.offsetTop);
   }
 
-  function lockedScrollTargetAbs() {
-    const sceneTop = scene.offsetTop;
-    if (transitionDir === 1) return sceneTop + getZoneStart();
-    return sceneTop + getZoneEnd();
-  }
-
   function endScrollTargetAbs() {
     const sceneTop = scene.offsetTop;
     if (transitionDir === 1) return sceneTop + getZoneEnd();
@@ -234,21 +231,20 @@
       const linearT = Math.min(1, elapsed / TRANSITION_ANIM_MS);
       const easedT = easeOutQuad(linearT);
       transitionT = transitionDir === 1 ? easedT : 1 - easedT;
-      // Pin scroll at start anchor during animation
-      const lock = lockedScrollTargetAbs();
-      if (Math.abs(window.scrollY - lock) > 1) window.scrollTo(0, lock);
+      // Single continuous scroll: from entry position to destination (no snap-back then snap-forward).
+      const scrollY =
+        transitionScrollFromAbs + (transitionScrollToAbs - transitionScrollFromAbs) * easedT;
+      window.scrollTo(0, scrollY);
       render();
       if (linearT >= 1) {
         transitionPhase = "hold";
         transitionHoldUntil = now + TRANSITION_HOLD_MS;
-        // Move scroll to final position so subsequent state has correct math
-        window.scrollTo(0, endScrollTargetAbs());
       }
       transitionRaf = window.requestAnimationFrame(transitionTick);
       return;
     }
     if (transitionPhase === "hold") {
-      const target = endScrollTargetAbs();
+      const target = transitionScrollToAbs;
       if (Math.abs(window.scrollY - target) > 1) window.scrollTo(0, target);
       render();
       if (now >= transitionHoldUntil) {
@@ -269,8 +265,8 @@
     transitionStartTime = performance.now();
     transitionPhase = "anim";
     pageState = STATE_TRANSITIONING;
-    // Pin scroll immediately so user can't keep flicking past
-    window.scrollTo(0, lockedScrollTargetAbs());
+    transitionScrollFromAbs = window.scrollY;
+    transitionScrollToAbs = endScrollTargetAbs();
     if (transitionRaf) window.cancelAnimationFrame(transitionRaf);
     transitionRaf = window.requestAnimationFrame(transitionTick);
   }
