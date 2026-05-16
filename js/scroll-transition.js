@@ -157,6 +157,7 @@
   let mobileMenuOpen = false;
   let mobileMenuEligible = false;
   let mobileArticleScrollStart = 0;
+  let mobileArticleBaseStart = 0;
   let lastMobileY = 0;
   let mobileSnapArmed = true;
 
@@ -505,24 +506,27 @@
     );
     const articleScrollStart =
       transitionPx + 120 + extraWelcomeRunway + requiredWelcomeScroll + extraWelcomeHold;
+    const snapJump = Math.max(140, window.innerHeight * 0.2);
+    const articleBaseStart = articleScrollStart + snapJump;
     mobileArticleScrollStart = articleScrollStart;
+    mobileArticleBaseStart = articleBaseStart;
     if (mobileSnapArmed && lastMobileY < articleScrollStart && y >= articleScrollStart) {
-      window.scrollTo({ top: sceneTop + articleScrollStart, behavior: "auto" });
-      lastMobileY = articleScrollStart;
+      window.scrollTo({ top: sceneTop + articleBaseStart, behavior: "auto" });
+      lastMobileY = articleBaseStart;
       mobileSnapArmed = false;
       return;
     }
     if (y < articleScrollStart - 32) {
       mobileSnapArmed = true;
     }
-    const articleActive = y >= articleScrollStart;
+    const articleActive = y >= articleBaseStart;
     setOpacity(layers.article, articleActive ? 1 : 0);
     layers.article.style.zIndex = "9";
     const articleOffset = articleActive
-      ? Math.max(0, Math.min(articleScrollMax, y - articleScrollStart))
+      ? Math.max(0, Math.min(articleScrollMax, y - articleBaseStart))
       : 0;
     articleInner.style.transform = `translateY(${-articleOffset}px)`;
-    scene.style.minHeight = `${articleScrollStart + articleScrollMax + window.innerHeight * 0.35}px`;
+    scene.style.minHeight = `${articleBaseStart + articleScrollMax + window.innerHeight * 0.35}px`;
 
     setRectPx(layers.footerBar, 0, ribbonLineTop, window.innerWidth, 2);
     setRectPx(layers.footerBg, 0, window.innerHeight - ribbonHeight, window.innerWidth, ribbonHeight);
@@ -750,7 +754,7 @@
         const sectionTarget = target ? target.offsetTop : index * 220;
         const mobileAnchorOffset = 0;
         window.scrollTo({
-          top: scene.offsetTop + mobileArticleScrollStart + mobileAnchorOffset + Math.max(0, sectionTarget),
+          top: scene.offsetTop + mobileArticleBaseStart + mobileAnchorOffset + Math.max(0, sectionTarget),
           behavior: prefersReduced ? "auto" : "smooth",
         });
         mobileMenuOpen = false;
