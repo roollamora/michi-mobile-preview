@@ -41,6 +41,8 @@
   const TRANSITION_MULTIPLIER = 1.45;
   const TITLE_SCALE = 0.58;
   const TITLE_WIDTH_TO = 392;
+  const DESKTOP_ARTICLE_PADDING_TOP = 300;
+  const DESKTOP_ARTICLE_PADDING_BOTTOM = 800;
   const PROGRESS_BASE = {
     frameW: 441,
     frameH: 47,
@@ -154,6 +156,7 @@
   let lastProgress = 0;
   let mobileMenuOpen = false;
   let mobileMenuEligible = false;
+  let mobileArticleScrollStart = 0;
 
   const prefersReduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
   const clamp01 = (v) => Math.max(0, Math.min(1, v));
@@ -485,6 +488,11 @@
     // In mobile, start article at section heading (menu-selected alignment).
     articleInner.style.paddingTop = "0px";
     articleInner.style.paddingBottom = "50vh";
+    const dynamicArticleScrollMax = Math.max(0, articleInner.scrollHeight - articleHeight);
+    if (Math.abs(dynamicArticleScrollMax - articleScrollMax) > 1) {
+      articleScrollMax = dynamicArticleScrollMax;
+      applySceneMinHeight();
+    }
     const articleSidePadding = 15;
     setRectPx(
       layers.article,
@@ -495,11 +503,15 @@
     );
     const articleScrollStart =
       transitionPx + 120 + extraWelcomeRunway + requiredWelcomeScroll + extraWelcomeHold;
-    const articleReveal = clamp01((y - articleScrollStart) / 140);
-    setOpacity(layers.article, articleReveal);
+    mobileArticleScrollStart = articleScrollStart;
+    const articleActive = y >= articleScrollStart;
+    setOpacity(layers.article, articleActive ? 1 : 0);
     layers.article.style.zIndex = "9";
-    const articleOffset = Math.max(0, Math.min(articleScrollMax, y - articleScrollStart));
+    const articleOffset = articleActive
+      ? Math.max(0, Math.min(articleScrollMax, y - articleScrollStart))
+      : 0;
     articleInner.style.transform = `translateY(${-articleOffset}px)`;
+    scene.style.minHeight = `${articleScrollStart + articleScrollMax + window.innerHeight * 0.35}px`;
 
     setRectPx(layers.footerBar, 0, ribbonLineTop, window.innerWidth, 2);
     setRectPx(layers.footerBg, 0, window.innerHeight - ribbonHeight, window.innerWidth, ribbonHeight);
@@ -571,8 +583,8 @@
     document.body.classList.remove("menu-open");
     mobileMenuOpen = false;
     mobileMenuEligible = false;
-    articleInner.style.paddingTop = "300px";
-    articleInner.style.paddingBottom = "800px";
+    articleInner.style.paddingTop = `${DESKTOP_ARTICLE_PADDING_TOP}px`;
+    articleInner.style.paddingBottom = `${DESKTOP_ARTICLE_PADDING_BOTTOM}px`;
     if (mobileMenuBtn) mobileMenuBtn.style.display = "none";
     if (mobileMenuPanel) mobileMenuPanel.style.height = "0px";
     [
@@ -724,9 +736,9 @@
         const id = link.getAttribute("href")?.slice(1);
         const target = id ? document.getElementById(id) : null;
         const sectionTarget = target ? target.offsetTop : index * 220;
-        const mobileAnchorOffset = 120;
+        const mobileAnchorOffset = 0;
         window.scrollTo({
-          top: scene.offsetTop + transitionPx + mobileAnchorOffset + Math.max(0, sectionTarget),
+          top: scene.offsetTop + mobileArticleScrollStart + mobileAnchorOffset + Math.max(0, sectionTarget),
           behavior: prefersReduced ? "auto" : "smooth",
         });
         mobileMenuOpen = false;
