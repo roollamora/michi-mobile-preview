@@ -444,6 +444,7 @@
     const welcomeAvailableHeight = Math.max(1, ribbonLineTop - welcomeTop);
     const fullWelcomeHeight = greetingHeight + 2 + introHeight;
     const requiredWelcomeScroll = Math.max(0, fullWelcomeHeight - welcomeAvailableHeight);
+    const extraWelcomeHold = Math.max(180, window.innerHeight * 0.35);
     const welcomeScroll = Math.max(
       0,
       Math.min(requiredWelcomeScroll, y - 120)
@@ -481,6 +482,9 @@
     setOpacity(cutout, 0);
     const articleTop = heroHeight;
     const articleHeight = Math.max(1, ribbonLineTop - articleTop);
+    // In mobile, start article at section heading (menu-selected alignment).
+    articleInner.style.paddingTop = "0px";
+    articleInner.style.paddingBottom = "50vh";
     const articleSidePadding = 15;
     setRectPx(
       layers.article,
@@ -489,9 +493,11 @@
       Math.max(1, window.innerWidth - articleSidePadding * 2),
       articleHeight
     );
-    setOpacity(layers.article, clamp01((welcomeFade - 0.9) / 0.1));
+    const articleScrollStart =
+      transitionPx + 120 + extraWelcomeRunway + requiredWelcomeScroll + extraWelcomeHold;
+    const articleReveal = clamp01((y - articleScrollStart) / 140);
+    setOpacity(layers.article, articleReveal);
     layers.article.style.zIndex = "9";
-    const articleScrollStart = transitionPx + 120 + extraWelcomeRunway + requiredWelcomeScroll;
     const articleOffset = Math.max(0, Math.min(articleScrollMax, y - articleScrollStart));
     articleInner.style.transform = `translateY(${-articleOffset}px)`;
 
@@ -565,6 +571,8 @@
     document.body.classList.remove("menu-open");
     mobileMenuOpen = false;
     mobileMenuEligible = false;
+    articleInner.style.paddingTop = "300px";
+    articleInner.style.paddingBottom = "800px";
     if (mobileMenuBtn) mobileMenuBtn.style.display = "none";
     if (mobileMenuPanel) mobileMenuPanel.style.height = "0px";
     [
