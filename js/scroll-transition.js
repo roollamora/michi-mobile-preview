@@ -160,9 +160,11 @@
   let mobileArticleBaseStart = 0;
   let lastMobileY = 0;
   let mobileSnapArmed = true;
-  let mobileSnapInProgress = false;
-  let mobileSnapTargetAbs = 0;
-  let mobileSnapRaf = 0;
+  let lastDesktopY = 0;
+  let desktopSnapArmed = true;
+  let forcedSnapInProgress = false;
+  let forcedSnapTargetAbs = 0;
+  let forcedSnapRaf = 0;
 
   const prefersReduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
   const clamp01 = (v) => Math.max(0, Math.min(1, v));
@@ -177,30 +179,30 @@
   const sx = (v) => v * scaleX();
   const sy = (v) => v * scaleY();
 
-  function tickMobileSnap() {
-    if (!mobileSnapInProgress) return;
+  function tickForcedSnap() {
+    if (!forcedSnapInProgress) return;
     const currentAbs = window.scrollY;
-    const delta = mobileSnapTargetAbs - currentAbs;
+    const delta = forcedSnapTargetAbs - currentAbs;
     if (Math.abs(delta) <= 2) {
-      window.scrollTo({ top: mobileSnapTargetAbs, behavior: "auto" });
-      mobileSnapInProgress = false;
-      if (mobileSnapRaf) {
-        window.cancelAnimationFrame(mobileSnapRaf);
-        mobileSnapRaf = 0;
+      window.scrollTo({ top: forcedSnapTargetAbs, behavior: "auto" });
+      forcedSnapInProgress = false;
+      if (forcedSnapRaf) {
+        window.cancelAnimationFrame(forcedSnapRaf);
+        forcedSnapRaf = 0;
       }
       return;
     }
-    const step = Math.sign(delta) * Math.max(14, Math.abs(delta) * 0.24);
+    const step = Math.sign(delta) * Math.max(28, Math.abs(delta) * 0.45);
     window.scrollTo({ top: currentAbs + step, behavior: "auto" });
-    mobileSnapRaf = window.requestAnimationFrame(tickMobileSnap);
+    forcedSnapRaf = window.requestAnimationFrame(tickForcedSnap);
   }
 
-  function startMobileSnap(targetAbs) {
-    mobileSnapTargetAbs = targetAbs;
-    if (mobileSnapInProgress) return;
-    mobileSnapInProgress = true;
-    if (mobileSnapRaf) window.cancelAnimationFrame(mobileSnapRaf);
-    mobileSnapRaf = window.requestAnimationFrame(tickMobileSnap);
+  function startForcedSnap(targetAbs) {
+    forcedSnapTargetAbs = targetAbs;
+    if (forcedSnapInProgress) return;
+    forcedSnapInProgress = true;
+    if (forcedSnapRaf) window.cancelAnimationFrame(forcedSnapRaf);
+    forcedSnapRaf = window.requestAnimationFrame(tickForcedSnap);
   }
 
   const titleSpans = [...layers.heroTitle.querySelectorAll("span")];
@@ -539,7 +541,7 @@
     mobileArticleScrollStart = articleScrollStart;
     mobileArticleBaseStart = articleBaseStart;
     if (mobileSnapArmed && lastMobileY < articleScrollStart && y >= articleScrollStart) {
-      startMobileSnap(sceneTop + articleBaseStart);
+      startForcedSnap(sceneTop + articleBaseStart);
       lastMobileY = articleBaseStart;
       mobileSnapArmed = false;
     }
@@ -614,9 +616,9 @@
     if (!(mobileMenuEligible && mobileMenuOpen)) {
       document.body.classList.remove("menu-open");
     }
-    if (!mobileSnapInProgress && mobileSnapRaf) {
-      window.cancelAnimationFrame(mobileSnapRaf);
-      mobileSnapRaf = 0;
+    if (!forcedSnapInProgress && forcedSnapRaf) {
+      window.cancelAnimationFrame(forcedSnapRaf);
+      forcedSnapRaf = 0;
     }
     lastMobileY = y;
   }
@@ -649,6 +651,15 @@
     });
     const sceneTop = scene.offsetTop;
     const y = Math.max(0, window.scrollY - sceneTop);
+    const desktopSnapTrigger = transitionPx * 0.62;
+    const desktopSnapTarget = transitionPx + DESKTOP_ARTICLE_PADDING_TOP;
+    if (desktopSnapArmed && lastDesktopY < desktopSnapTrigger && y >= desktopSnapTrigger) {
+      startForcedSnap(sceneTop + desktopSnapTarget);
+      desktopSnapArmed = false;
+    }
+    if (y < desktopSnapTrigger - 48) {
+      desktopSnapArmed = true;
+    }
     const raw = clamp01(y / transitionPx);
     const p = prefersReduced ? (raw >= 0.5 ? 1 : 0) : ease(raw);
     lastProgress = p;
@@ -748,6 +759,7 @@
       markerTop,
       amountTop,
     });
+    lastDesktopY = y;
   }
 
   navLinks.forEach((link, index) => {
