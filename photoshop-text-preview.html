@@ -1,0 +1,385 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Foerderkreis Figma Export</title>
+  <style>
+    @font-face {
+      font-family: "Futura";
+      src:
+        local("Futura Medium"),
+        local("Futura-Medium"),
+        url("./fonts/futura-medium.ttf") format("truetype");
+      font-style: normal;
+      font-weight: 500;
+      font-display: swap;
+    }
+    @font-face {
+      font-family: "Futura";
+      src:
+        local("Futura Bold"),
+        local("Futura-Bold"),
+        url("./fonts/futura-bold.ttf") format("truetype");
+      font-style: normal;
+      font-weight: 700;
+      font-display: swap;
+    }
+    @font-face {
+      font-family: "Futura Condensed";
+      src: url("./fonts/futura-condensed-medium.ttf") format("truetype");
+      font-style: normal;
+      font-weight: 500;
+      font-display: swap;
+    }
+    @font-face {
+      font-family: "Futura Condensed";
+      src: url("./fonts/futura-condensed-extrabold.ttf") format("truetype");
+      font-style: normal;
+      font-weight: 800;
+      font-display: swap;
+    }
+
+    html, body {
+      margin: 0;
+      min-height: 100%;
+      background: #fdfdfb;
+      color: #000;
+      font-family: "Futura", Arial, sans-serif;
+      overflow-x: hidden;
+    }
+    * { box-sizing: border-box; }
+    a { color: inherit; }
+
+    .scene { position: relative; width: 100%; min-height: 260vh; }
+    #figma-frame {
+      position: fixed;
+      inset: 0;
+      width: 100vw;
+      height: 100vh;
+      background: #fdfdfb;
+      overflow: hidden;
+    }
+    .layer { position: absolute; }
+    #layer-hero-black { transition: height 220ms ease; }
+
+    .hero-title, .hero-title span {
+      font-family: "Futura Condensed", sans-serif;
+      font-synthesis: style;
+      text-align: right;
+    }
+    .hero-title { white-space: nowrap; }
+    .hero-title span[data-weight="500"]:not(.title-colon) { font-style: italic; }
+
+    #layer-nav {
+      color: #808080;
+      font-size: clamp(22px, 2vw, 30px);
+      font-weight: 700;
+      line-height: 1.2;
+      opacity: 0;
+      z-index: 14;
+    }
+    #layer-nav .nav-row { position: relative; margin-bottom: 33px; text-align: right; }
+    #layer-nav .nav-row:last-child { margin-bottom: 0; }
+    #layer-nav .nav-link { display: inline-block; text-decoration: none; position: relative; z-index: 1; }
+    #layer-cutout {
+      position: absolute;
+      background: #fdfdfb;
+      opacity: 0;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    #layer-article {
+      opacity: 0;
+      overflow: hidden;
+      z-index: 10;
+      font-size: clamp(14px, 1.05vw, 17px);
+      line-height: 1.38;
+      color: #111;
+    }
+    #article-scroll-inner {
+      will-change: transform;
+      padding-top: 300px;
+      padding-bottom: 800px;
+      box-sizing: border-box;
+    }
+    #layer-article h2 {
+      font-size: clamp(24px, 2vw, 32px);
+      margin: 0 0 8px;
+      font-weight: 700;
+    }
+    #layer-article section { margin-bottom: 26px; }
+    #layer-article p, #layer-article ul { margin: 0 0 11px; }
+
+    #layer-footer-bg {
+      background: #fdfdfb;
+      opacity: 0;
+      z-index: 22;
+    }
+    #layer-footer-bar {
+      background: #000;
+      opacity: 0;
+      z-index: 23;
+    }
+    #layer-status {
+      opacity: 0;
+      z-index: 24;
+      background: #fdfdfb;
+      color: #808080;
+      font-size: clamp(11px, 0.95vw, 13px);
+      line-height: 1.3;
+      padding: 2px 4px;
+    }
+    #layer-status strong { color: #4c4c4c; font-weight: 500; }
+    #layer-donate-compact {
+      opacity: 0;
+      z-index: 24;
+      text-align: center;
+      font-size: clamp(22px, 1.9vw, 30px);
+      font-weight: 700;
+      line-height: 1.04;
+    }
+
+    #progress-group { position: absolute; inset: 0; z-index: 30; pointer-events: none; }
+    #progress-group > * { pointer-events: auto; position: absolute; }
+    #progressFrame {
+      box-sizing: border-box;
+      background: #fdfdfb;
+      border: 9px solid #808080;
+    }
+    #progressFill { background: #000; z-index: 2; }
+    #progressPending { background: rgba(0,0,0,0.2); z-index: 1; }
+    #goalAmount {
+      color: #808080;
+      font-weight: 700;
+      font-size: clamp(18px, 1.4vw, 24px);
+      text-align: right;
+    }
+    .date-label {
+      color: #808080;
+      font-size: clamp(10px, 0.75vw, 12px);
+      text-align: right;
+    }
+    .add-label {
+      color: rgba(128,128,128,0.4);
+      font-size: clamp(13px, 1vw, 16px);
+      text-align: right;
+    }
+    .progress-marker-triangle {
+      transform: translateX(-50%);
+      width: 0;
+      height: 0;
+      border-left: 7px solid transparent;
+      border-right: 7px solid transparent;
+      border-bottom: 9px solid #000;
+      pointer-events: none;
+    }
+    .progress-marker-amount {
+      transform: translateX(-50%);
+      font-size: clamp(26px, 2.2vw, 34px);
+      font-weight: 700;
+      line-height: 1;
+      white-space: nowrap;
+      pointer-events: none;
+    }
+    #build-tag {
+      position: fixed;
+      top: 6px;
+      right: 10px;
+      z-index: 9999;
+      color: #808080;
+      font-size: 11px;
+      line-height: 1;
+      border: 1px solid #d7d7d7;
+      background: rgba(253, 253, 251, 0.88);
+      padding: 4px 6px;
+    }
+
+    #layer-greeting {
+      color: #111;
+      font-size: clamp(20px, 1.7vw, 30px);
+      font-weight: 700;
+      line-height: 1.18;
+      z-index: 16;
+      white-space: nowrap;
+    }
+    #layer-intro {
+      color: #fdfdfb;
+      font-size: clamp(14px, 1.05vw, 17px);
+      line-height: 1.4;
+      z-index: 16;
+    }
+    #layer-portrait {
+      object-fit: cover;
+      object-position: center top;
+      z-index: 11;
+    }
+    #mobile-menu-btn {
+      position: fixed;
+      top: 10px;
+      left: 10px;
+      width: 36px;
+      height: 36px;
+      border: none;
+      border-radius: 6px;
+      background: rgba(0, 0, 0, 0.85);
+      color: #fff;
+      font-size: 20px;
+      line-height: 1;
+      z-index: 10005;
+      display: none;
+      cursor: pointer;
+    }
+    #mobile-menu-panel {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      background: rgba(0, 0, 0, 0.98);
+      z-index: 10005;
+      display: none;
+      padding: 8px 16px 14px;
+      font-size: clamp(20px, 2.7vw, 30px);
+      font-weight: 700;
+      line-height: 1.2;
+      overflow: hidden;
+      height: 0;
+      opacity: 0;
+      transform: translateY(-8px);
+      pointer-events: none;
+      transition:
+        height 220ms ease,
+        opacity 180ms ease,
+        transform 220ms ease;
+    }
+    #mobile-menu-panel a {
+      display: block;
+      text-decoration: none;
+      color: #808080;
+      padding: 7px 0;
+      text-align: right;
+    }
+    body.mobile-layout #mobile-menu-btn { display: block; }
+    body.mobile-layout #mobile-menu-panel { display: block; }
+    body.mobile-layout.menu-open #mobile-menu-panel {
+      opacity: 1;
+      transform: translateY(0);
+      pointer-events: auto;
+    }
+    body.mobile-layout #layer-status { display: none !important; }
+    body.mobile-layout .date-label,
+    body.mobile-layout .add-label { display: none; }
+  </style>
+</head>
+<body>
+  <button id="mobile-menu-btn" type="button" aria-label="Open contents">≡</button>
+  <nav id="mobile-menu-panel" aria-label="Contents">
+    <a href="#section-story" data-mobile-nav="0">Meine Geschichte</a>
+    <a href="#section-hertie" data-mobile-nav="1">Warum die Hertie School?</a>
+    <a href="#section-finance" data-mobile-nav="2">Die Finanzierung</a>
+    <a href="#section-circle" data-mobile-nav="3">Der Förderkreis</a>
+  </nav>
+  <div id="build-tag">build 2026-05-16-0646</div>
+  <div class="scene" id="scene">
+    <div id="figma-frame">
+      <div id="layer-left-bg" class="layer" style="left:0;top:0;width:577px;height:833px;background:#fdfdfb;"></div>
+      <div id="layer-divider" class="layer" style="left:577px;top:0;width:15px;height:832px;background:#000;"></div>
+      <div id="layer-right-grey" class="layer" style="left:592px;top:0;width:688px;height:832px;background:#808080;"></div>
+      <div id="layer-hero-black" class="layer" style="left:74px;top:0;width:518px;height:398px;background:#000;"></div>
+
+      <div id="hero-title" class="hero-title layer" style="left:-44.68px;top:133.25px;width:617.76px;">
+        <span data-weight="800" style="color:#fdfdfb;font-size:30.24px;font-weight:800;line-height:37.26px;letter-spacing:0.91px;">Förderkreis</span><span data-weight="500" style="color:#fdfdfb;font-size:33.48px;font-weight:500;line-height:37.26px;letter-spacing:1px;"> </span><span data-weight="500" style="color:#fdfdfb;font-size:26.46px;font-weight:500;line-height:37.26px;letter-spacing:0.79px;">für </span><span data-weight="800" style="color:#fdfdfb;font-size:30.24px;font-weight:800;line-height:37.26px;letter-spacing:0.91px;">Michael Thomsen</span><span data-weight="500" class="title-colon" style="color:#fdfdfb;font-size:30.24px;font-weight:500;line-height:37.26px;letter-spacing:0.91px;">:<br></span><span data-weight="800" style="color:#fdfdfb;font-size:27px;font-weight:800;line-height:48.96px;">„</span><span data-weight="800" style="color:#fdfdfb;font-size:45px;font-weight:800;line-height:48.96px;">Master of Public Policy</span><span data-weight="800" style="color:#fdfdfb;font-size:27px;font-weight:800;line-height:48.96px;">“<br></span><span data-weight="500" style="color:#fdfdfb;font-size:26.46px;font-weight:500;line-height:40.86px;letter-spacing:3.7px;">an der</span><span data-weight="500" style="color:#fdfdfb;font-size:30.24px;font-weight:500;line-height:40.86px;letter-spacing:4.23px;"> </span><span data-weight="800" style="color:#fdfdfb;font-size:30.24px;font-weight:800;line-height:40.86px;letter-spacing:4.23px;">Hertie School</span><span data-weight="500" style="color:#fdfdfb;font-size:30.24px;font-weight:500;line-height:40.86px;letter-spacing:4.23px;"> </span><span data-weight="500" style="color:#fdfdfb;font-size:26.46px;font-weight:500;line-height:40.86px;letter-spacing:3.7px;">in </span><span data-weight="800" style="color:#fdfdfb;font-size:30.24px;font-weight:800;line-height:40.86px;letter-spacing:4.23px;">Berlin</span>
+      </div>
+
+      <div id="layer-greeting" class="layer" style="left:640px;top:144px;width:480px;">Liebe Freundinnen und Freunde,<br>liebe Unterstützerinnen und Unterstützer,</div>
+      <div id="layer-intro" class="layer" style="left:619px;top:214px;width:410px;">
+        Mein Name ist Michael Thomsen.<br>
+        2018 habe ich mich nochmal entschieden einen neuen Weg einzuschlagen und meinen großen Traum zu verwirklichen mich an der Gestaltung unserer Gesellschaft zu beteiligen und zur Lösung der vielen Probleme beizutragen mit der unsere Gesellschaft gerade konfrontiert ist.<br><br>
+        Nach meinem Bachelor in Politik, Philosophie und Ökonomie ist mein nächster Schritt nun der Master in „Public Policy“ an der Hertie School in Berlin.<br><br>
+        Ein Studium wie dieses öffnet Türen, die für viele Menschen unerreichbar bleiben und auch für mich lange in weiter ferne lagen. Noch vor wenigen Jahren hätte ich niemals gedacht, dass sie sich für mich einmal öffnen würden. Da ich mir die Studiengebühren für dieses Studium nicht leisten kann, habe ich mich entschieden mich zu trauen ein Crowdfunding für meinen Master zu starten und bin jedem und jeder Förderer*in unglaublich dankbar für jede Unterstützung.
+      </div>
+      <img id="layer-portrait" class="layer" src="./Untitled-1.png" alt="Portrait" style="left:784px;top:398px;width:496px;height:437px;">
+
+      <nav id="layer-nav" class="layer" style="left:98px;top:309px;width:296px;height:283px;">
+        <div id="layer-cutout"></div>
+        <div class="nav-row"><a class="nav-link" href="#section-story" data-nav-index="0">Meine Geschichte</a></div>
+        <div class="nav-row"><a class="nav-link" href="#section-hertie" data-nav-index="1">Warum die Hertie School?</a></div>
+        <div class="nav-row"><a class="nav-link" href="#section-finance" data-nav-index="2">Die Finanzierung</a></div>
+        <div class="nav-row"><a class="nav-link" href="#section-circle" data-nav-index="3">Der Förderkreis</a></div>
+      </nav>
+
+      <article id="layer-article" class="layer" style="left:437px;top:214px;width:634px;height:426px;">
+        <div id="article-scroll-inner">
+  <section id="section-story">
+    <h2>Meine Geschichte</h2>
+    <p>vor acht Jahren habe ich mich entschieden, mein Leben noch einmal neu auszurichten. Ich wollte nicht mehr nur über die Gesellschaft schimpfen und mir Utopien ausmalen, während ich als Großpuppenspieler arbeitete und die Welt kennenlernen durfte (<a href="https://www.dundu.eu" target="_blank" rel="noopener">www.dundu.eu</a>).</p>
+    <p>Ich entschied mich die Herausforderung anzunehmen und Teil der Lösung gesellschaftlicher Probleme zu werden. Aus Demut gegenüber der Komplexität unserer Gesellschaft wählte ich als Ausgangspunkt dafür ein Studium in Politik, Philosophie und Ökonomie an der Universität Witten/Herdecke.</p>
+    <p>Als finanzielle Grundlage dafür sollte mir eine Ausbildung zum Zimmermann dienen die ich im Allgäu absolvierte. Nun bin ich am Ende meines Bachelors in Witten und möchte meinen Weg mit einem Master in Public Policy an der Hertie School in Berlin weitergehen.</p>
+    <p>Für mich ist diese private Universität die Möglichkeit, meinen Traum zu erfüllen, durch konkretes Politik-Design tatsächlich an der Gestaltung unserer Gesellschaft beteiligt zu sein. Staatliche Alternativen in Konstanz oder Passau sind, nach dem Urteil meines Bachelorarbeit-Betreuers Professor Stötzer, mit der akademischen und vor allem praktischen Qualität der Hertie School nicht zu vergleichen. Mehr dazu unter dem Reiter „Hertie School“. Für den Platz dort konnte ich mir ein 35% Teilstipendium sichern. Dies ist eine einmalige Chance für mich.</p>
+    <p>Was treibt mich an? Früher waren es die klassisch grünen Themen wie ökologische Landwirtschaft, Klimawandel und erneuerbare Energien. Als Trump das erste Mal gewählt wurde und der Rechtsruck in Europa stärker wurde, kamen Themen wie Rechtspopulismus, politische Meinungsbildung und digitale Souveränität hinzu. Das verbindende Element ist die Demokratie. Sie muss nicht nur im analogen-, wie digitalen Raum geschützt werden, sondern weiterentwickelt werden. Zu einer Staatsform in der ein fairer, unverzerrter und faktenbasierter öffentlicher Diskurs dazu führt, das sich mehr Menschen als je gehört fühlen. Damit meine ich insbesondere auch die Menschen mit einem schwachen sozio-ökonomischen und nicht-akademischen Hintergrund zu denen ich mich zähle. Damit Menschen wieder Vertrauen und Zuversicht in die Demokratie gewinnen. Daher interessiere ich mich im Besonderen für folgende Politikfelder- und Themen: Bildung, Digitalisierung, Digitale Souveränität, soziale Gerechtigkeit und Verteilungsfragen, Gleichberechtigung aller Menschen und ein öffentlicher Diskurs, der das möglich macht mit qualitativ hochwertigen Medien.</p>
+    <p>Als zentrales Politikfeld für all diese Themen, sehe ich die Digitalpolitik. Da sie insbesondere unseren öffentlichen Diskurs und damit gesellschaftliche politische Meinungsbildung ermöglicht oder verhindert. Die Hertie School hat dafür ein extra „Center for Digital Governance“ an dem ich mein Wissen in dem Bereich vertiefen kann. Außerdem bemühe ich mich einen Nebenjob im Bundestag zu finden bei Abgeordneten in diesem Bereich.</p>
+    <p>Neben dem Potential von Digitalpolitik unsere Demokratie zu schützen, möchte ich mich auch mit den vielen Möglichkeiten des selben Bereichs auseinandersetzen, unsere Demokratie zu verbessern. In dem wir unnötige Bürokratie abbauen. Dieses Potential sowohl Demokratie zu schützen, als auch sie zu verbessern, möchte ich gerne weiter ergründen in Studium und Nebenjob und hätte nie gedacht, einmal so nah an das politische Geschehen zu gelangen.</p>
+    <p>Eine Förderung meiner Person unterstützt nicht nur meine persönlichen Ziele, sondern realisiert auch soziale Mobilität in unserer Gesellschaft und bereichert Politikgestaltung mit Sichtweisen einer bisher unterrepräsentierten sozialen Gruppe.</p>
+  </section>
+  <section id="section-hertie">
+    <h2>Warum die Hertie School?</h2>
+    <p>Die Hertie School verbindet akademische Exzellenz mit direkter politischer Praxis wie keine andere Universität in Deutschland. Viele Lehrende kommen selbst aus der Forschung oder Praxis. Sie sind zum Beispiel im Vorstand der Münchener Sicherheitskonferenz oder beraten die Bundesregierung. Der enge Bezug zum Bundestag und zur politischen Praxis macht den Studiengang für mich besonders attraktiv, nicht nur räumlich, sondern auch persönlich. Gerade weil ich mein Studium vergleichsweise spät aufgenommen habe, möchte ich die kommenden Jahre bewusst so nutzen, dass ich möglichst unmittelbar politische Praxis kennenlerne und Verantwortung übernehmen kann. Als jemand der nicht in die Akademia gehen möchte, sondern in die praktische Politikgestaltung in Ministerien oder Bundestag, entspricht dieser Praxisbezug genau dem Weg, den ich einschlagen möchte.</p>
+    <p>Die Forschung der Hertie School ist in verschiedene Kompetenzzentren gegliedert:</p>
+    <ul>
+      <li>Centre for Digital Governance</li>
+      <li>Centre for Fundamental Rights</li>
+      <li>Centre for International Security</li>
+      <li>Centre for Sustainability</li>
+      <li>Jacques Delors Centre</li>
+      <li>Data Science Lab</li>
+    </ul>
+    <p>Ein Blick in die Details lohnt sich ☺</p>
+    <p>Der Studiengang: <a href="https://www.hertie-school.org/en/mpp" target="_blank" rel="noopener">https://www.hertie-school.org/en/mpp</a></p>
+    <p>Ein Video der den Studiengang vorstellt (Englisch): <a href="https://www.youtube.com/watch?v=cTUGQb2xV0Q&amp;t=9s" target="_blank" rel="noopener">YouTube</a></p>
+  </section>
+  <section id="section-finance">
+    <h2>Die Finanzierung</h2>
+    <p>Die regulären Studiengebühren des Masters betragen: 38.500 €. Durch ein Teilstipendium von 35 % das ich erwerben konnte, muss ich nur noch 25.025 € zahlen.</p>
+    <p>Zusätzlich unterstützen mich bereits drei Menschen gemeinsam mit: 200 € pro Monat über 24 Monate = 4.800 €</p>
+    <p>Damit bleibt aktuell eine Finanzierungslücke von: 20.225 €</p>
+    <p>Die Studiengebühren werden in vier Tranchen über zwei Jahre ausgezahlt.</p>
+    <p>1.500€ mussten bereits als Anzahlung für die Einschreibung überwiesen werden und sind Teil eines Darlehens, das ich zusammen mit den 4.756,25€ des 15. Juni, von einem Freund erhalten habe. Dieses Darlehen soll über die monatlichen Unterstützungsbeiträge bis zum Ende des Studiums zurückgezahlt werden.</p>
+    <p>Damit die Finanzierung insgesamt aufgeht, müssten ab dem 1. Juli 2026 durchschnittlich 842,70€ pro Monat über einen Zeitraum von 24 Monaten zusammenkommen.</p>
+    <p>Umsetzung: Wenn ihr euch entschieden habt, schreibt mir gern eine Nachricht, damit ich mit euch rechnen kann: 0176/32706602</p>
+    <p>Die IBAN für das Förderkreis-Konto: DE64 4306 0967 7031 9359 02<br>Kontoinhaber: Michael Thomsen<br>Bank: GLS-Bank</p>
+    <p>Bei monatlichen Zahlungen per Dauerauftrag:<br>Förderbeginn: 01.07.2026<br>Letzter Fördermonat: 01.06.2028</p>
+  </section>
+  <section id="section-circle">
+    <h2>Der Förderkreis</h2>
+    <p>Unterstützerinnen und Unterstützer können: monatlich einen frei gewählten Betrag beitragen oder einmalig eine größere Summe spenden.</p>
+    <p>Für den Förderkreis möchte ich im Gegenzug Einblicke in mein Studium und den Job geben den ich hoffentlich begleitend zum Studium in einem Ministerium, dem Bundestag oder an der Universität an einem Lehrstuhl finden werde, um meinen Lebensunterhalt zu finanzieren. Dafür möchte ich einen regelmäßigen Newsletter erstellen (alle drei Monate). Außerdem biete ich an, euch jederzeit in Berlin herumzuführen.</p>
+    <p>Leider ermöglichen klassische Crowdfunding-Seiten keine monatlichen Zahlungen. Daher werde ich ein extra Konto für das Funding einrichten und davon transparent regelmäßig Kontoauszüge dem Förderkreis zur Verfügung stellen. Natürlich mit geschwärzten personenbezogenen Daten.</p>
+    <p>Eure Förderung ist nicht einfach nur eine Wohltätigkeit. Sie schafft soziale Mobilität in unserer Gesellschaft und ist eine Investition in jemanden, der im Gegenzug politische Verantwortung übernimmt und sich für uns alle in den Dienst der Gesellschaft stellt. Ihr könnt euch nicht vorstellen, was dieser Master für mich bedeutet. Für eure Unterstützung bin ich euch von tiefstem Herzen dankbar!</p>
+    <p>Wendet euch jederzeit mit Fragen oder Anregungen und Ideen an mich: <a href="mailto:michael.thomsen@uni-wh.de">michael.thomsen@uni-wh.de</a> oder mobil: 0176/32706602</p>
+  </section>
+      </div>
+      </article>
+
+      <div id="layer-footer-bar" class="layer" style="left:0;top:640px;width:1280px;height:19px;"></div>
+      <div id="layer-footer-bg" class="layer" style="left:0;top:659px;width:1280px;height:173px;"></div>
+      <div id="layer-status" class="layer" style="left:720px;top:676px;width:350px;height:96px;"></div>
+      <div id="layer-donate-compact" class="layer" style="left:74px;top:698px;width:148px;height:59px;"><span id="ctaText">SPENDEN</span><br>HIER!</div>
+
+      <div id="progress-group">
+        <div id="progressFrame" data-base-left="99" data-base-top="468" style="left:99px;top:468px;width:441px;height:47px;"></div>
+        <div id="progressFill"></div>
+        <div id="progressPending"></div>
+        <div id="milestoneDates"></div>
+        <div id="milestoneAmounts"></div>
+
+        <div id="goalAmount" data-base-left="436" data-base-top="520" style="left:436px;top:520px;width:106px;">25,025€</div>
+        <div id="progressMarkerTriangle" class="progress-marker-triangle" style="left:109px;top:517px;"></div>
+        <div id="donationAmount" class="progress-marker-amount" style="left:109px;top:532px;">4,800</div>
+      </div>
+    </div>
+  </div>
+  <script src="/js/site-client.js?v=202605160646"></script>
+  <script src="/js/scroll-transition.js?v=202605160646"></script>
+</body>
+</html>

@@ -1,0 +1,84 @@
+{
+  "frame": {
+    "widthPx": 1280,
+    "heightPx": 832
+  },
+  "notes": [
+    "Percentages are relative to frame width=1280 and height=832.",
+    "Use x% and y% for absolute positioning in responsive mockups."
+  ],
+  "elements": {
+    "layer-left-bg": {
+      "px": { "left": 0, "top": 0, "width": 577, "height": 833 },
+      "percent": { "left": 0.0, "top": 0.0, "width": 45.078, "height": 100.12 }
+    },
+    "layer-divider": {
+      "px": { "left": 577, "top": 0, "width": 15, "height": 832 },
+      "percent": { "left": 45.078, "top": 0.0, "width": 1.172, "height": 100.0 }
+    },
+    "layer-right-grey": {
+      "px": { "left": 592, "top": 0, "width": 688, "height": 832 },
+      "percent": { "left": 46.25, "top": 0.0, "width": 53.75, "height": 100.0 }
+    },
+    "layer-hero-black": {
+      "px": { "left": 74, "top": 0, "width": 518, "height": 398 },
+      "percent": { "left": 5.781, "top": 0.0, "width": 40.469, "height": 47.837 }
+    },
+    "hero-title": {
+      "px": { "left": -44.68, "top": 133.25, "width": 617.76 },
+      "percent": { "left": -3.491, "top": 16.016, "width": 48.262 }
+    },
+    "layer-greeting": {
+      "px": { "left": 640, "top": 144, "width": 480 },
+      "percent": { "left": 50.0, "top": 17.308, "width": 37.5 }
+    },
+    "layer-intro": {
+      "px": { "left": 619, "top": 214, "width": 410 },
+      "percent": { "left": 48.359, "top": 25.721, "width": 32.031 }
+    },
+    "layer-portrait": {
+      "px": { "left": 784, "top": 398, "width": 496, "height": 437 },
+      "percent": { "left": 61.25, "top": 47.837, "width": 38.75, "height": 52.524 }
+    },
+    "layer-nav": {
+      "px": { "left": 98, "top": 309, "width": 296, "height": 283 },
+      "percent": { "left": 7.656, "top": 37.139, "width": 23.125, "height": 34.014 }
+    },
+    "layer-article": {
+      "px": { "left": 437, "top": 214, "width": 634, "height": 426 },
+      "percent": { "left": 34.141, "top": 25.721, "width": 49.531, "height": 51.202 }
+    },
+    "layer-footer-bar": {
+      "px": { "left": 0, "top": 640, "width": 1280, "height": 19 },
+      "percent": { "left": 0.0, "top": 76.923, "width": 100.0, "height": 2.284 }
+    },
+    "layer-footer-bg": {
+      "px": { "left": 0, "top": 659, "width": 1280, "height": 173 },
+      "percent": { "left": 0.0, "top": 79.207, "width": 100.0, "height": 20.793 }
+    },
+    "layer-status": {
+      "px": { "left": 720, "top": 676, "width": 350, "height": 96 },
+      "percent": { "left": 56.25, "top": 81.25, "width": 27.344, "height": 11.538 }
+    },
+    "layer-donate-compact": {
+      "px": { "left": 74, "top": 698, "width": 148, "height": 59 },
+      "percent": { "left": 5.781, "top": 83.894, "width": 11.562, "height": 7.091 }
+    },
+    "progressFrame": {
+      "px": { "left": 99, "top": 468, "width": 441, "height": 47 },
+      "percent": { "left": 7.734, "top": 56.25, "width": 34.453, "height": 5.649 }
+    },
+    "goalAmount": {
+      "px": { "left": 436, "top": 520, "width": 106 },
+      "percent": { "left": 34.062, "top": 62.5, "width": 8.281 }
+    },
+    "progressMarkerTriangle": {
+      "px": { "left": 109, "top": 517 },
+      "percent": { "left": 8.516, "top": 62.139 }
+    },
+    "donationAmount": {
+      "px": { "left": 109, "top": 532 },
+      "percent": { "left": 8.516, "top": 63.942 }
+    }
+  }
+}
