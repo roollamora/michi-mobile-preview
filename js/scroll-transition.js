@@ -386,11 +386,12 @@
     const ribbonHeight = Math.max(96, window.innerHeight * 0.18);
     const ribbonLineTop = window.innerHeight - ribbonHeight - 2;
 
-    const titleWidth = window.innerWidth;
+    const titleSidePadding = 8;
+    const titleWidth = Math.max(1, window.innerWidth - titleSidePadding * 2);
     const shrinkT = clamp01((heroShrink - 0.12) / 0.88);
     const titleTop = 12;
     layers.heroTitle.style.left = "auto";
-    layers.heroTitle.style.right = "0px";
+    layers.heroTitle.style.right = `${titleSidePadding}px`;
     layers.heroTitle.style.top = `${titleTop}px`;
     layers.heroTitle.style.width = `${titleWidth}px`;
     layers.heroTitle.style.transformOrigin = "100% 0%";
@@ -401,7 +402,7 @@
     lerpTitleTypography(0, 1);
     const titleNaturalWidth =
       Math.max(1, layers.heroTitle.getBoundingClientRect().width || layers.heroTitle.scrollWidth || titleWidth);
-    const fitScale = Math.min(1, window.innerWidth / titleNaturalWidth);
+    const fitScale = Math.min(1, titleWidth / titleNaturalWidth);
     const titleScale = lerp(fitScale, fitScale * 0.62, shrinkT);
     layers.heroTitle.style.transform = `scale(${titleScale})`;
     const measuredTitleHeight = layers.heroTitle.getBoundingClientRect().height || 72;
@@ -461,7 +462,14 @@
     setOpacity(cutout, 0);
     const articleTop = heroHeight;
     const articleHeight = Math.max(1, ribbonLineTop - articleTop);
-    setRectPx(layers.article, 5, articleTop, window.innerWidth - 10, articleHeight);
+    const articleSidePadding = 15;
+    setRectPx(
+      layers.article,
+      articleSidePadding,
+      articleTop,
+      Math.max(1, window.innerWidth - articleSidePadding * 2),
+      articleHeight
+    );
     setOpacity(layers.article, clamp01((welcomeFade - 0.9) / 0.1));
     layers.article.style.zIndex = "9";
     const articleScrollStart = transitionPx + 120 + extraWelcomeRunway;
