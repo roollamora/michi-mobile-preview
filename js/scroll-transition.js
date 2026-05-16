@@ -381,22 +381,27 @@
     const sceneTop = scene.offsetTop;
     const y = Math.max(0, window.scrollY - sceneTop);
     const heroShrink = clamp01(y / 320);
-    const welcomeFade = clamp01((y - 220) / (260 + window.innerHeight * 0.5));
+    const extraWelcomeRunway = window.innerHeight * 0.5;
+    const welcomeFade = clamp01((y - 220) / (260 + window.innerHeight * 0.5 + extraWelcomeRunway));
     const ribbonHeight = Math.max(96, window.innerHeight * 0.18);
     const ribbonLineTop = window.innerHeight - ribbonHeight - 2;
 
-    const rightInset = 8;
-    const titleInset = 0;
-    const titleWidth = window.innerWidth - rightInset;
+    const titleWidth = window.innerWidth;
     const shrinkT = clamp01((heroShrink - 0.12) / 0.88);
     const titleTop = 12;
-    setRectPx(layers.heroTitle, titleInset, titleTop, titleWidth, null);
+    layers.heroTitle.style.left = "auto";
+    layers.heroTitle.style.right = "0px";
+    layers.heroTitle.style.top = `${titleTop}px`;
+    layers.heroTitle.style.width = `${titleWidth}px`;
     layers.heroTitle.style.transformOrigin = "100% 0%";
     layers.heroTitle.style.transform = "scale(1)";
     layers.heroTitle.style.zIndex = "17";
+    layers.heroTitle.style.width = "max-content";
+    layers.heroTitle.style.maxWidth = "none";
     lerpTitleTypography(0, 1);
-    const titleNaturalWidth = Math.max(1, layers.heroTitle.scrollWidth || titleWidth);
-    const fitScale = Math.min(1, titleWidth / titleNaturalWidth);
+    const titleNaturalWidth =
+      Math.max(1, layers.heroTitle.getBoundingClientRect().width || layers.heroTitle.scrollWidth || titleWidth);
+    const fitScale = Math.min(1, window.innerWidth / titleNaturalWidth);
     const titleScale = lerp(fitScale, fitScale * 0.62, shrinkT);
     layers.heroTitle.style.transform = `scale(${titleScale})`;
     const measuredTitleHeight = layers.heroTitle.getBoundingClientRect().height || 72;
@@ -457,9 +462,9 @@
     const articleTop = heroHeight;
     const articleHeight = Math.max(1, ribbonLineTop - articleTop);
     setRectPx(layers.article, 5, articleTop, window.innerWidth - 10, articleHeight);
-    setOpacity(layers.article, clamp01((welcomeFade - 0.78) / 0.22));
+    setOpacity(layers.article, clamp01((welcomeFade - 0.9) / 0.1));
     layers.article.style.zIndex = "9";
-    const articleScrollStart = transitionPx + 120;
+    const articleScrollStart = transitionPx + 120 + extraWelcomeRunway;
     const articleOffset = Math.max(0, Math.min(articleScrollMax, y - articleScrollStart));
     articleInner.style.transform = `translateY(${-articleOffset}px)`;
 
@@ -559,6 +564,7 @@
     applyRect("rightGrey", layers.rightGrey, p);
     applyRect("heroBlack", layers.heroBlack, p);
     applyRect("heroTitle", layers.heroTitle, p, { height: false });
+    layers.heroTitle.style.right = "";
     layers.heroTitle.style.transform = "";
     layers.heroTitle.style.transformOrigin = "";
     lerpTitleTypography(p);
