@@ -156,15 +156,14 @@
   let lastProgress = 0;
   let mobileMenuOpen = false;
   let mobileMenuEligible = false;
-  let mobileArticleScrollStart = 0;
   let mobileArticleBaseStart = 0;
-  let lastMobileY = 0;
-  let mobileSnapArmed = true;
-  let lastDesktopY = 0;
-  let desktopSnapArmed = true;
-  let forcedSnapInProgress = false;
-  let forcedSnapTargetAbs = 0;
-  let forcedSnapRaf = 0;
+  let cachedMobileWelcomeEnd = 0;
+
+  // Single snap state machine - hard instant snap, no half-states.
+  let snapArmed = true;
+  let snapLocked = false;
+  let snapLockUntil = 0;
+  let prevScrollY = 0;
 
   const prefersReduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
   const clamp01 = (v) => Math.max(0, Math.min(1, v));
@@ -179,30 +178,26 @@
   const sx = (v) => v * scaleX();
   const sy = (v) => v * scaleY();
 
-  function tickForcedSnap() {
-    if (!forcedSnapInProgress) return;
-    const currentAbs = window.scrollY;
-    const delta = forcedSnapTargetAbs - currentAbs;
-    if (Math.abs(delta) <= 2) {
-      window.scrollTo({ top: forcedSnapTargetAbs, behavior: "auto" });
-      forcedSnapInProgress = false;
-      if (forcedSnapRaf) {
-        window.cancelAnimationFrame(forcedSnapRaf);
-        forcedSnapRaf = 0;
-      }
-      return;
-    }
-    const step = Math.sign(delta) * Math.max(28, Math.abs(delta) * 0.45);
-    window.scrollTo({ top: currentAbs + step, behavior: "auto" });
-    forcedSnapRaf = window.requestAnimationFrame(tickForcedSnap);
+  function doInstantSnap(targetAbs) {
+    snapLocked = true;
+    snapLockUntil = performance.now() + 120;
+    window.scrollTo({ top: targetAbs, behavior: "auto" });
+    prevScrollY = targetAbs;
   }
 
-  function startForcedSnap(targetAbs) {
-    forcedSnapTargetAbs = targetAbs;
-    if (forcedSnapInProgress) return;
-    forcedSnapInProgress = true;
-    if (forcedSnapRaf) window.cancelAnimationFrame(forcedSnapRaf);
-    forcedSnapRaf = window.requestAnimationFrame(tickForcedSnap);
+  function evaluateSnap(triggerAbs, targetAbs) {
+    const now = performance.now();
+    if (snapLocked) {
+      if (now >= snapLockUntil) snapLocked = false;
+      else return;
+    }
+    const curr = window.scrollY;
+    if (snapArmed && prevScrollY < triggerAbs && curr >= triggerAbs) {
+      snapArmed = false;
+      doInstantSnap(targetAbs);
+      return;
+    }
+    if (curr < triggerAbs - 80) snapArmed = true;
   }
 
   const titleSpans = [...layers.heroTitle.querySelectorAll("span")];
@@ -400,6 +395,9 @@
       const articleTop = Math.max(260, Math.min(360, window.innerHeight * 0.38));
       const articleHeight = Math.max(120, window.innerHeight - articleTop - ribbonHeight - 12);
       articleScrollMax = Math.max(0, articleInner.scrollHeight - articleHeight);
+      if (!cachedMobileWelcomeEnd) {
+        cachedMobileWelcomeEnd = Math.max(window.innerHeight * 1.4, 900);
+      }
       applySceneMinHeight();
       return;
     }
@@ -535,19 +533,9 @@
       Math.max(1, window.innerWidth - articleSidePadding * 2),
       articleHeight
     );
-    const articleScrollStart = 120 + requiredWelcomeScroll + extraWelcomeRunway + extraWelcomeHold;
-    const snapJump = Math.max(140, window.innerHeight * 0.2);
-    const articleBaseStart = articleScrollStart + snapJump;
-    mobileArticleScrollStart = articleScrollStart;
+    const articleBaseStart = 120 + requiredWelcomeScroll + extraWelcomeRunway + extraWelcomeHold;
     mobileArticleBaseStart = articleBaseStart;
-    if (mobileSnapArmed && lastMobileY < articleScrollStart && y >= articleScrollStart) {
-      startForcedSnap(sceneTop + articleBaseStart);
-      lastMobileY = articleBaseStart;
-      mobileSnapArmed = false;
-    }
-    if (y < articleScrollStart - 32) {
-      mobileSnapArmed = true;
-    }
+    cachedMobileWelcomeEnd = articleBaseStart;
     const articleActive = y >= articleBaseStart;
     setOpacity(layers.article, articleActive ? 1 : 0);
     layers.article.style.zIndex = "9";
@@ -597,17 +585,16 @@
     });
 
     if (mobileMenuBtn) {
-      if (mobileMenuEligible) {
-        mobileMenuBtn.style.display = "block";
-        mobileMenuBtn.style.top = "0px";
-        mobileMenuBtn.style.left = "0px";
-        mobileMenuBtn.style.height = `${heroBaseHeight}px`;
-        mobileMenuBtn.style.width = `${Math.max(56, heroBaseHeight * 0.6)}px`;
-        mobileMenuBtn.style.borderRadius = "0";
-      } else {
-        mobileMenuBtn.style.display = "none";
-      }
+      mobileMenuBtn.style.display = "block";
+      mobileMenuBtn.style.top = "0px";
+      mobileMenuBtn.style.left = "0px";
+      mobileMenuBtn.style.height = `${heroBaseHeight}px`;
+      mobileMenuBtn.style.width = `${Math.max(56, heroBaseHeight * 0.6)}px`;
+      mobileMenuBtn.style.borderRadius = "0";
+      mobileMenuBtn.style.padding = "0";
+      mobileMenuBtn.style.lineHeight = `${heroBaseHeight}px`;
     }
+    mobileMenuEligible = true;
     if (mobileMenuPanel) {
       mobileMenuPanel.style.top = `${heroBaseHeight}px`;
       mobileMenuPanel.style.height = `${menuDropHeight}px`;
@@ -616,15 +603,20 @@
     if (!(mobileMenuEligible && mobileMenuOpen)) {
       document.body.classList.remove("menu-open");
     }
-    if (!forcedSnapInProgress && forcedSnapRaf) {
-      window.cancelAnimationFrame(forcedSnapRaf);
-      forcedSnapRaf = 0;
-    }
-    lastMobileY = y;
   }
 
   function render() {
-    if (isMobileLayout()) {
+    const sceneTop = scene.offsetTop;
+    const mobile = isMobileLayout();
+    const transitionEnd = mobile
+      ? cachedMobileWelcomeEnd || transitionPx
+      : transitionPx;
+    const snapTrigger = sceneTop + transitionEnd * 0.5;
+    const snapTarget = sceneTop + transitionEnd + (mobile ? 0 : DESKTOP_ARTICLE_PADDING_TOP);
+    evaluateSnap(snapTrigger, snapTarget);
+    prevScrollY = window.scrollY;
+
+    if (mobile) {
       renderMobile();
       return;
     }
@@ -649,17 +641,7 @@
     ].forEach((el) => {
       if (el) el.style.zIndex = "";
     });
-    const sceneTop = scene.offsetTop;
     const y = Math.max(0, window.scrollY - sceneTop);
-    const desktopSnapTrigger = transitionPx * 0.62;
-    const desktopSnapTarget = transitionPx + DESKTOP_ARTICLE_PADDING_TOP;
-    if (desktopSnapArmed && lastDesktopY < desktopSnapTrigger && y >= desktopSnapTrigger) {
-      startForcedSnap(sceneTop + desktopSnapTarget);
-      desktopSnapArmed = false;
-    }
-    if (y < desktopSnapTrigger - 48) {
-      desktopSnapArmed = true;
-    }
     const raw = clamp01(y / transitionPx);
     const p = prefersReduced ? (raw >= 0.5 ? 1 : 0) : ease(raw);
     lastProgress = p;
@@ -759,7 +741,6 @@
       markerTop,
       amountTop,
     });
-    lastDesktopY = y;
   }
 
   navLinks.forEach((link, index) => {
@@ -815,11 +796,15 @@
   }
 
   window.addEventListener("resize", () => {
+    cachedMobileWelcomeEnd = 0;
+    snapArmed = true;
+    snapLocked = false;
     updateSceneHeight();
     render();
   });
   window.addEventListener("scroll", render, { passive: true });
 
+  prevScrollY = window.scrollY;
   updateSceneHeight();
   render();
 })();
