@@ -159,10 +159,15 @@
   let mobileArticleBaseStart = 0;
   let cachedMobileWelcomeEnd = 0;
 
-  // Single snap state machine - hard instant snap, no half-states.
+  // Single snap state machine - animated travel + forced hold, no half-states.
   let snapArmed = true;
-  let snapLocked = false;
-  let snapLockUntil = 0;
+  let snapPhase = "idle"; // "idle" | "travel" | "hold"
+  let snapFromY = 0;
+  let snapToY = 0;
+  let snapStartTime = 0;
+  let snapHoldUntil = 0;
+  const SNAP_TRAVEL_MS = 360;
+  const SNAP_HOLD_MS = 280;
   let prevScrollY = 0;
 
   const prefersReduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
@@ -178,27 +183,89 @@
   const sx = (v) => v * scaleX();
   const sy = (v) => v * scaleY();
 
-  function doInstantSnap(targetAbs) {
-    snapLocked = true;
-    snapLockUntil = performance.now() + 120;
-    window.scrollTo({ top: targetAbs, behavior: "auto" });
-    prevScrollY = targetAbs;
+  const easeOutQuad = (t) => 1 - (1 - t) * (1 - t);
+
+  function snapLocked() {
+    return snapPhase !== "idle";
+  }
+
+  function snapTick(now) {
+    if (snapPhase === "idle") return;
+    if (snapPhase === "travel") {
+      const elapsed = now - snapStartTime;
+      if (elapsed >= SNAP_TRAVEL_MS) {
+        window.scrollTo(0, snapToY);
+        snapPhase = "hold";
+        snapHoldUntil = now + SNAP_HOLD_MS;
+        window.requestAnimationFrame(snapTick);
+        return;
+      }
+      const t = easeOutQuad(elapsed / SNAP_TRAVEL_MS);
+      const y = snapFromY + (snapToY - snapFromY) * t;
+      window.scrollTo(0, y);
+      window.requestAnimationFrame(snapTick);
+      return;
+    }
+    if (snapPhase === "hold") {
+      if (Math.abs(window.scrollY - snapToY) > 1) {
+        window.scrollTo(0, snapToY);
+      }
+      if (now >= snapHoldUntil) {
+        snapPhase = "idle";
+        prevScrollY = snapToY;
+        return;
+      }
+      window.requestAnimationFrame(snapTick);
+    }
+  }
+
+  function startSnap(targetAbs) {
+    snapFromY = window.scrollY;
+    snapToY = targetAbs;
+    snapStartTime = performance.now();
+    snapPhase = "travel";
+    window.requestAnimationFrame(snapTick);
   }
 
   function evaluateSnap(triggerAbs, targetAbs) {
-    const now = performance.now();
-    if (snapLocked) {
-      if (now >= snapLockUntil) snapLocked = false;
-      else return;
-    }
+    if (snapLocked()) return;
     const curr = window.scrollY;
     if (snapArmed && prevScrollY < triggerAbs && curr >= triggerAbs) {
       snapArmed = false;
-      doInstantSnap(targetAbs);
+      startSnap(targetAbs);
       return;
     }
     if (curr < triggerAbs - 80) snapArmed = true;
   }
+
+  function blockIfLocked(e) {
+    if (!snapLocked()) return;
+    e.preventDefault();
+    e.stopPropagation();
+  }
+  window.addEventListener("wheel", blockIfLocked, { passive: false, capture: true });
+  window.addEventListener("touchmove", blockIfLocked, { passive: false, capture: true });
+  window.addEventListener(
+    "keydown",
+    (e) => {
+      if (!snapLocked()) return;
+      const blocked = new Set([
+        "ArrowUp",
+        "ArrowDown",
+        "PageUp",
+        "PageDown",
+        "Home",
+        "End",
+        " ",
+        "Spacebar",
+      ]);
+      if (blocked.has(e.key)) {
+        e.preventDefault();
+        e.stopPropagation();
+      }
+    },
+    { capture: true }
+  );
 
   const titleSpans = [...layers.heroTitle.querySelectorAll("span")];
   const titleMetrics = titleSpans.map((span) => {
@@ -798,7 +865,7 @@
   window.addEventListener("resize", () => {
     cachedMobileWelcomeEnd = 0;
     snapArmed = true;
-    snapLocked = false;
+    snapPhase = "idle";
     updateSceneHeight();
     render();
   });
