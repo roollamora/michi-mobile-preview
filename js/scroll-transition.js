@@ -533,8 +533,7 @@
       Math.max(1, window.innerWidth - articleSidePadding * 2),
       articleHeight
     );
-    const articleScrollStart =
-      transitionPx + 120 + extraWelcomeRunway + requiredWelcomeScroll + extraWelcomeHold;
+    const articleScrollStart = 120 + requiredWelcomeScroll + extraWelcomeRunway + extraWelcomeHold;
     const snapJump = Math.max(140, window.innerHeight * 0.2);
     const articleBaseStart = articleScrollStart + snapJump;
     mobileArticleScrollStart = articleScrollStart;
