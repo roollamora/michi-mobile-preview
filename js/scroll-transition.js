@@ -382,7 +382,6 @@
     const y = Math.max(0, window.scrollY - sceneTop);
     const heroShrink = clamp01(y / 320);
     const extraWelcomeRunway = window.innerHeight * 0.5;
-    const welcomeFade = clamp01((y - 220) / (260 + window.innerHeight * 0.5 + extraWelcomeRunway));
     const ribbonHeight = Math.max(96, window.innerHeight * 0.18);
     const ribbonLineTop = window.innerHeight - ribbonHeight - 2;
 
@@ -423,7 +422,6 @@
 
     setRectPx(layers.leftBg, 0, 0, window.innerWidth, window.innerHeight);
     setRectPx(layers.rightGrey, 0, 0, window.innerWidth, window.innerHeight);
-    setOpacity(layers.rightGrey, 0.94 * (1 - welcomeFade));
     layers.rightGrey.style.zIndex = "15";
     setOpacity(layers.divider, 0);
     setRectPx(layers.heroBlack, 0, 0, window.innerWidth, heroHeight);
@@ -442,6 +440,26 @@
       window.innerWidth - 10,
       null
     );
+    const introHeight = layers.intro.getBoundingClientRect().height || 0;
+    const welcomeAvailableHeight = Math.max(1, ribbonLineTop - welcomeTop);
+    const fullWelcomeHeight = greetingHeight + 2 + introHeight;
+    const requiredWelcomeScroll = Math.max(0, fullWelcomeHeight - welcomeAvailableHeight);
+    const welcomeScroll = Math.max(
+      0,
+      Math.min(requiredWelcomeScroll, y - 120)
+    );
+    const shiftedWelcomeTop = welcomeTop - welcomeScroll;
+    setRectPx(layers.greeting, greetingX, shiftedWelcomeTop, window.innerWidth - 10, null);
+    setRectPx(
+      layers.intro,
+      greetingX,
+      shiftedWelcomeTop + greetingHeight + 2,
+      window.innerWidth - 10,
+      null
+    );
+    const welcomeFadeStart = 220 + requiredWelcomeScroll + extraWelcomeRunway;
+    const welcomeFade = clamp01((y - welcomeFadeStart) / 260);
+    setOpacity(layers.rightGrey, 0.94 * (1 - welcomeFade));
     layers.greeting.style.zIndex = "18";
     layers.intro.style.zIndex = "18";
     setOpacity(layers.greeting, 1 - welcomeFade);
@@ -473,7 +491,7 @@
     );
     setOpacity(layers.article, clamp01((welcomeFade - 0.9) / 0.1));
     layers.article.style.zIndex = "9";
-    const articleScrollStart = transitionPx + 120 + extraWelcomeRunway;
+    const articleScrollStart = transitionPx + 120 + extraWelcomeRunway + requiredWelcomeScroll;
     const articleOffset = Math.max(0, Math.min(articleScrollMax, y - articleScrollStart));
     articleInner.style.transform = `translateY(${-articleOffset}px)`;
 
