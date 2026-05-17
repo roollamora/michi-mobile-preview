@@ -155,15 +155,35 @@
     if (articleInner && content.articleHtml) articleInner.innerHTML = content.articleHtml;
   }
 
+  function basePath() {
+    const segments = window.location.pathname.split("/").filter(Boolean);
+    if (segments.length > 1 && segments[0] === "michi-mobile-preview") {
+      return "/" + segments[0];
+    }
+    return "";
+  }
+
+  function resolvePath(path) {
+    if (path.startsWith("http")) return path;
+    const base = basePath();
+    if (path.startsWith("/")) return base + path;
+    return (base ? base + "/" : "./") + path.replace(/^\.\//, "");
+  }
+
   async function loadSiteData() {
     if (window.MICHI_SITE_DATA && typeof window.MICHI_SITE_DATA === "object") {
       return window.MICHI_SITE_DATA;
     }
     try {
-      const apiResponse = await fetch("/api/site", { cache: "no-store" });
-      if (apiResponse.ok) return apiResponse.json();
+      const apiResponse = await fetch(resolvePath("/api/site"), { cache: "no-store" });
+      if (apiResponse.ok) {
+        const contentType = apiResponse.headers.get("content-type") || "";
+        if (contentType.includes("application/json")) return apiResponse.json();
+      }
     } catch (_) {}
-    const staticResponse = await fetch("./data/site-data.json", { cache: "no-store" });
+    const staticResponse = await fetch(resolvePath("./data/site-data.json"), {
+      cache: "no-store",
+    });
     if (!staticResponse.ok) throw new Error("Could not load site data");
     return staticResponse.json();
   }
