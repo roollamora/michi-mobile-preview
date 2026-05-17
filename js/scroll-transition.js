@@ -19,10 +19,13 @@
     portrait: document.getElementById("layer-portrait"),
     nav,
     article,
+    donationBorder: document.getElementById("layer-donation-border"),
     footerBar: document.getElementById("layer-footer-bar"),
     footerBg: document.getElementById("layer-footer-bg"),
     status: document.getElementById("layer-status"),
     donate: document.getElementById("layer-donate-compact"),
+    donationForms: document.getElementById("layer-donation-forms"),
+    donationInfo: document.getElementById("layer-donation-info"),
     progressFrame: document.getElementById("progressFrame"),
     progressMarker: document.getElementById("progressMarkerTriangle"),
     donationAmount: document.getElementById("donationAmount"),
@@ -35,14 +38,29 @@
 
   const DESIGN_W = 1280;
   const DESIGN_H = 832;
+  /** Expanded donation panel: equal columns inside white footer inset */
+  const DONATION_PANEL_PAD_X = 44;
+  const DONATION_PANEL_INNER = 20;
+  const DONATION_COL_GAP = 28;
+  const DONATION_WHITE_W = 1192;
+  const DONATION_COL_W =
+    (DONATION_WHITE_W - DONATION_PANEL_INNER * 2 - DONATION_COL_GAP) / 2;
+  const DONATION_LEFT_X = DONATION_PANEL_PAD_X + DONATION_PANEL_INNER;
+  const DONATION_RIGHT_X = DONATION_LEFT_X + DONATION_COL_W + DONATION_COL_GAP;
+  const DONATION_TOP_Y = 500;
+  const DONATION_FORMS_H = 278;
+  const DONATION_INFO_H = 300;
+  const DONATION_PROGRESS_Y = DONATION_TOP_Y + DONATION_FORMS_H + 14;
+  /** Viewports narrower than this use ribbon / stacked layout (no desktop scene proportions). */
+  const MOBILE_LAYOUT_MAX_WIDTH_PX = 520;
   const FOOTER_TOP = 640;
   const ARTICLE_TOP_FROM = 214;
   const ARTICLE_TOP_TO = -39;
   const TRANSITION_MULTIPLIER = 1.45;
   const TITLE_SCALE = 0.58;
-  const TITLE_WIDTH_TO = 392;
   const DESKTOP_ARTICLE_PADDING_TOP = 300;
   const DESKTOP_ARTICLE_PADDING_BOTTOM = 800;
+
   const PROGRESS_BASE = {
     frameW: 441,
     frameH: 47,
@@ -84,7 +102,7 @@
         anchor: "top-right",
         anchorTarget: "heroBlack",
         from: { x: 18.92, y: 133.25, w: 617.76, h: 0 },
-        to: { x: 18.92, y: 157.03, w: TITLE_WIDTH_TO, h: 0 },
+        to: { x: 11.12, y: 157.03, w: 330.75, h: 0 },
       },
       greeting: {
         mode: "proportional",
@@ -108,7 +126,7 @@
         mode: "proportional",
         anchor: "top-left",
         from: { x: 98, y: 309, w: 296, h: 283 },
-        to: { x: 98, y: 309, w: 296, h: 283 },
+        to: { x: 98, y: 309, w: 150, h: 283 },
       },
       article: {
         mode: "proportional",
@@ -116,23 +134,23 @@
         from: { x: 437, y: ARTICLE_TOP_FROM, w: 634, h: 426 },
         to: { x: 437, y: ARTICLE_TOP_TO, w: 634, h: 679 },
       },
+      donationBorder: {
+        mode: "proportional",
+        anchor: "top-left",
+        from: { x: 0, y: 640, w: 1280, h: 19 },
+        to: { x: 0, y: 288, w: 1280, h: 544 },
+      },
       footerBar: {
         mode: "proportional",
         anchor: "top-left",
         from: { x: 0, y: 640, w: 1280, h: 19 },
-        to: { x: 0, y: 640, w: 1280, h: 19 },
+        to: { x: 0, y: 288, w: 1280, h: 19 },
       },
       footerBg: {
         mode: "proportional",
         anchor: "top-left",
         from: { x: 0, y: 659, w: 1280, h: 173 },
-        to: { x: 0, y: 659, w: 1280, h: 173 },
-      },
-      status: {
-        mode: "proportional",
-        anchor: "top-left",
-        from: { x: 720, y: 676, w: 350, h: 96 },
-        to: { x: 720, y: 676, w: 350, h: 96 },
+        to: { x: 44, y: 307, w: 1192, h: 519 },
       },
       donate: {
         mode: "proportional",
@@ -140,11 +158,38 @@
         from: { x: 74, y: 698, w: 148, h: 59 },
         to: { x: 74, y: 698, w: 148, h: 59 },
       },
+      donationForms: {
+        mode: "proportional",
+        anchor: "top-left",
+        from: { x: 74, y: 698, w: 148, h: 59 },
+        to: {
+          x: DONATION_LEFT_X,
+          y: DONATION_TOP_Y,
+          w: DONATION_COL_W,
+          h: DONATION_FORMS_H,
+        },
+      },
+      donationInfo: {
+        mode: "proportional",
+        anchor: "top-left",
+        from: { x: 720, y: 676, w: 350, h: 96 },
+        to: {
+          x: DONATION_RIGHT_X,
+          y: DONATION_TOP_Y,
+          w: DONATION_COL_W,
+          h: DONATION_INFO_H,
+        },
+      },
       progressFrame: {
         mode: "proportional",
         anchor: "top-left",
         from: { x: 99, y: 468, w: 441, h: 47 },
-        to: { x: 238, y: 701, w: 441, h: 47 },
+        to: {
+          x: DONATION_LEFT_X,
+          y: DONATION_PROGRESS_Y,
+          w: DONATION_COL_W,
+          h: 47,
+        },
       },
     },
   };
@@ -158,12 +203,12 @@
   let mobileMenuEligible = false;
   let mobileArticleBaseStart = 0;
   let cachedMobileWelcomeEnd = 0;
-  let cachedMobileTransitionStart = 0;
+
+  let lastMobileBreakpoint = window.innerWidth < MOBILE_LAYOUT_MAX_WIDTH_PX;
 
   const prefersReduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
   const clamp01 = (v) => Math.max(0, Math.min(1, v));
   const lerp = (a, b, t) => a + (b - a) * t;
-  const ease = (t) => (t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2);
   const remap = (v, a, b) => clamp01((v - a) / (b - a));
   const fadeIn = (v, a, b) => remap(v, a, b);
   const fadeOut = (v, a, b) => 1 - remap(v, a, b);
@@ -172,148 +217,21 @@
   const scaleMin = () => Math.min(scaleX(), scaleY());
   const sx = (v) => v * scaleX();
   const sy = (v) => v * scaleY();
-  const easeOutQuad = (t) => 1 - (1 - t) * (1 - t);
 
-  // Page state machine. Transition is OWNED by time, not scroll.
-  // Scroll only governs WELCOME and ARTICLE phases.
+  /** Desktop resize/nav bookkeeping only — layout is always driven by scroll position */
   const STATE_WELCOME = "welcome";
-  const STATE_TRANSITIONING = "transitioning";
   const STATE_ARTICLE = "article";
   let pageState = STATE_WELCOME;
-  let transitionT = 0;
-  let transitionDir = 1; // 1 = welcome→article, -1 = article→welcome
-  let transitionPhase = "idle"; // "idle" | "anim" | "hold"
-  let transitionStartTime = 0;
-  let transitionHoldUntil = 0;
-  let transitionRaf = 0;
-  const TRANSITION_ANIM_MS = 520;
-  const TRANSITION_HOLD_MS = 720;
-  /** Captured document scroll when transition starts — one continuous scroll to destination */
-  let transitionScrollFromAbs = 0;
-  let transitionScrollToAbs = 0;
-  /** Frozen scene-relative zone bounds for entire transition — prevents endpoint drift mid-morph */
-  let frozenZoneStartRel = null;
-  let frozenZoneEndRel = null;
-  let prevScrollY = 0;
 
-  function getZoneStart() {
-    if (transitionLocked() && frozenZoneStartRel != null) return frozenZoneStartRel;
-    return isMobileLayout()
-      ? cachedMobileTransitionStart || transitionPx * 0.5
-      : transitionPx * 0.12;
-  }
   function getZoneEnd() {
-    if (transitionLocked() && frozenZoneEndRel != null) return frozenZoneEndRel;
     return isMobileLayout()
       ? cachedMobileWelcomeEnd || transitionPx
       : transitionPx + DESKTOP_ARTICLE_PADDING_TOP;
   }
-  function transitionLocked() {
-    return transitionPhase !== "idle";
-  }
 
-  // y value used by rendering. In transitioning phase this is time-driven,
-  // so the layout reaches end-state regardless of actual scrollY.
   function getRenderY() {
-    if (transitionLocked()) {
-      const a = getZoneStart();
-      const b = getZoneEnd();
-      return a + (b - a) * transitionT;
-    }
     return Math.max(0, window.scrollY - scene.offsetTop);
   }
-
-  function transitionTick(now) {
-    if (transitionPhase === "idle") return;
-    if (transitionPhase === "anim") {
-      const elapsed = now - transitionStartTime;
-      const linearT = Math.min(1, elapsed / TRANSITION_ANIM_MS);
-      const easedT = easeOutQuad(linearT);
-      transitionT = transitionDir === 1 ? easedT : 1 - easedT;
-      // Single continuous scroll: from entry position to destination (no snap-back then snap-forward).
-      const scrollY =
-        transitionScrollFromAbs + (transitionScrollToAbs - transitionScrollFromAbs) * easedT;
-      window.scrollTo(0, scrollY);
-      render();
-      if (linearT >= 1) {
-        transitionPhase = "hold";
-        transitionHoldUntil = now + TRANSITION_HOLD_MS;
-      }
-      transitionRaf = window.requestAnimationFrame(transitionTick);
-      return;
-    }
-    if (transitionPhase === "hold") {
-      const target = transitionScrollToAbs;
-      if (Math.abs(window.scrollY - target) > 1) window.scrollTo(0, target);
-      render();
-      if (now >= transitionHoldUntil) {
-        transitionPhase = "idle";
-        const dirDone = transitionDir;
-        const syncStart = frozenZoneStartRel;
-        const syncEnd = frozenZoneEndRel;
-        frozenZoneStartRel = null;
-        frozenZoneEndRel = null;
-        if (dirDone === 1 && syncEnd != null) cachedMobileWelcomeEnd = syncEnd;
-        if (dirDone === 1 && syncStart != null) cachedMobileTransitionStart = syncStart;
-        if (dirDone === -1 && syncStart != null) cachedMobileTransitionStart = syncStart;
-        pageState = dirDone === 1 ? STATE_ARTICLE : STATE_WELCOME;
-        prevScrollY = window.scrollY;
-        transitionRaf = 0;
-        return;
-      }
-      transitionRaf = window.requestAnimationFrame(transitionTick);
-    }
-  }
-
-  function startTransition(direction) {
-    if (transitionLocked()) return;
-    transitionDir = direction;
-    transitionT = direction === 1 ? 0 : 1;
-    transitionStartTime = performance.now();
-    pageState = STATE_TRANSITIONING;
-    frozenZoneStartRel = getZoneStart();
-    frozenZoneEndRel = getZoneEnd();
-    transitionPhase = "anim";
-    transitionScrollFromAbs = window.scrollY;
-    const sceneTop = scene.offsetTop;
-    transitionScrollToAbs =
-      direction === 1
-        ? sceneTop + frozenZoneEndRel
-        : sceneTop + Math.max(0, frozenZoneStartRel - 1);
-    if (transitionRaf) window.cancelAnimationFrame(transitionRaf);
-    transitionRaf = window.requestAnimationFrame(transitionTick);
-  }
-
-  // Input blockers - kill any user-initiated movement while locked.
-  function killInput(e) {
-    if (!transitionLocked()) return;
-    e.preventDefault();
-    e.stopPropagation();
-  }
-  window.addEventListener("wheel", killInput, { passive: false, capture: true });
-  window.addEventListener("touchmove", killInput, { passive: false, capture: true });
-  window.addEventListener("touchstart", killInput, { passive: false, capture: true });
-  window.addEventListener(
-    "keydown",
-    (e) => {
-      if (!transitionLocked()) return;
-      const blocked = new Set([
-        "ArrowUp",
-        "ArrowDown",
-        "PageUp",
-        "PageDown",
-        "Home",
-        "End",
-        " ",
-        "Spacebar",
-      ]);
-      if (blocked.has(e.key)) {
-        e.preventDefault();
-        e.stopPropagation();
-      }
-    },
-    { capture: true }
-  );
 
   const titleSpans = [...layers.heroTitle.querySelectorAll("span")];
   const titleMetrics = titleSpans.map((span) => {
@@ -440,6 +358,13 @@
     el.style.opacity = String(clamp01(value));
   }
 
+  function setLayerVisible(el, value) {
+    const v = clamp01(value);
+    setOpacity(el, v);
+    if (!el) return;
+    el.style.pointerEvents = v > 0.05 ? "auto" : "none";
+  }
+
   function lerpTitleTypography(p, scaleOverride = null) {
     const typographyScale = scaleOverride == null ? scaleMin() : scaleOverride;
     for (const metric of titleMetrics) {
@@ -484,7 +409,9 @@
   }
 
   function shiftProgressLabels(p, progressRect) {
-    const frameLeft = progressRect ? progressRect.x : sx(lerp(99, 238, p));
+    const frameLeft = progressRect
+      ? progressRect.x
+      : sx(lerp(99, DONATION_LEFT_X, p));
     const frameTop = progressRect ? progressRect.y : sy(lerp(468, 701, p));
     const frameWidth = progressRect ? progressRect.w : sx(441);
     const frameRight = frameLeft + frameWidth;
@@ -523,7 +450,7 @@
   }
 
   function isMobileLayout() {
-    return window.innerWidth <= 768;
+    return window.innerWidth < MOBILE_LAYOUT_MAX_WIDTH_PX;
   }
 
   function renderMobile() {
@@ -609,9 +536,6 @@
       null
     );
     const welcomeFadeStart = 220 + requiredWelcomeScroll + extraWelcomeRunway;
-    if (!transitionLocked()) {
-      cachedMobileTransitionStart = welcomeFadeStart;
-    }
     const welcomeFade = clamp01((y - welcomeFadeStart) / 260);
     setOpacity(layers.rightGrey, 0.94 * (1 - welcomeFade));
     layers.greeting.style.zIndex = "18";
@@ -652,13 +576,10 @@
       articleHeight
     );
     const articleBaseStart = 120 + requiredWelcomeScroll + extraWelcomeRunway + extraWelcomeHold;
-    const stableArticleBase =
-      transitionLocked() && frozenZoneEndRel != null ? frozenZoneEndRel : articleBaseStart;
+    const stableArticleBase = articleBaseStart;
     mobileArticleBaseStart = stableArticleBase;
-    if (!transitionLocked()) {
-      cachedMobileWelcomeEnd = articleBaseStart;
-    }
-    const articleActive = y >= stableArticleBase;
+    cachedMobileWelcomeEnd = articleBaseStart;
+    const articleActive = pageState === STATE_ARTICLE || y >= stableArticleBase;
     setOpacity(layers.article, articleActive ? 1 : 0);
     layers.article.style.zIndex = "9";
     const articleOffset = articleActive
@@ -675,6 +596,9 @@
     layers.footerBg.style.zIndex = "21";
     setOpacity(layers.status, 0);
     setOpacity(layers.donate, 0);
+    setOpacity(layers.donationBorder, 0);
+    setOpacity(layers.donationForms, 0);
+    setOpacity(layers.donationInfo, 0);
 
     const progressWidth = Math.min(window.innerWidth - 24, 430);
     const progressHeight = progressWidth * (PROGRESS_BASE.frameH / PROGRESS_BASE.frameW);
@@ -728,24 +652,7 @@
   }
 
   function render() {
-    const sceneTop = scene.offsetTop;
     const mobile = isMobileLayout();
-
-    // State-machine: trigger forward/backward transition once per crossing.
-    if (!transitionLocked()) {
-      const realY = Math.max(0, window.scrollY - sceneTop);
-      const zStart = getZoneStart();
-      const zEnd = getZoneEnd();
-      if (pageState === STATE_WELCOME && realY >= zStart) {
-        startTransition(1);
-        return;
-      }
-      if (pageState === STATE_ARTICLE && realY <= zEnd - 40) {
-        startTransition(-1);
-        return;
-      }
-    }
-    prevScrollY = window.scrollY;
 
     if (mobile) {
       renderMobile();
@@ -767,40 +674,46 @@
       layers.intro,
       layers.portrait,
       layers.article,
+      layers.donationBorder,
       layers.footerBar,
       layers.footerBg,
+      layers.donate,
+      layers.donationForms,
+      layers.donationInfo,
     ].forEach((el) => {
       if (el) el.style.zIndex = "";
     });
+
     const y = getRenderY();
     const raw = clamp01(y / transitionPx);
-    const p = prefersReduced ? (raw >= 0.5 ? 1 : 0) : ease(raw);
-    lastProgress = p;
+    const pScroll = prefersReduced ? (raw >= 0.5 ? 1 : 0) : raw;
+    const pLayout = pScroll;
+    lastProgress = pScroll;
 
-    applyRect("leftBg", layers.leftBg, p);
-    applyRect("divider", layers.divider, p);
-    applyRect("rightGrey", layers.rightGrey, p);
-    applyRect("heroBlack", layers.heroBlack, p);
-    applyRect("heroTitle", layers.heroTitle, p, { height: false });
+    applyRect("leftBg", layers.leftBg, pLayout);
+    applyRect("divider", layers.divider, pLayout);
+    applyRect("rightGrey", layers.rightGrey, pLayout);
+    applyRect("heroBlack", layers.heroBlack, pLayout);
+    applyRect("heroTitle", layers.heroTitle, pLayout, { height: false });
     layers.heroTitle.style.right = "";
     layers.heroTitle.style.transform = "";
     layers.heroTitle.style.transformOrigin = "";
-    lerpTitleTypography(p);
+    lerpTitleTypography(pLayout);
 
-    const greetingRect = applyRect("greeting", layers.greeting, p, { height: false });
+    const greetingRect = applyRect("greeting", layers.greeting, pLayout, { height: false });
     layers.greeting.style.whiteSpace = "nowrap";
-    const introRect = applyRect("intro", layers.intro, p, { height: false });
+    const introRect = applyRect("intro", layers.intro, pLayout, { height: false });
     if (greetingRect && introRect && layers.greeting && layers.intro) {
       const greetingHeight = layers.greeting.getBoundingClientRect().height;
       const introTop = greetingRect.y + greetingHeight + sy(2);
       setRectPx(layers.intro, introRect.x, introTop, introRect.w, introRect.h);
     }
-    applyRect("portrait", layers.portrait, p);
+    applyRect("portrait", layers.portrait, pLayout);
 
-    applyRect("nav", layers.nav, p);
-    const articleRect = resolveRect("article", p);
-    const articleTop = articleRect ? articleRect.y : sy(lerp(ARTICLE_TOP_FROM, ARTICLE_TOP_TO, p));
-    const footerRect = resolveRect("footerBar", p);
+    applyRect("nav", layers.nav, pLayout);
+    const articleRect = resolveRect("article", pLayout);
+    const articleTop = articleRect ? articleRect.y : sy(lerp(ARTICLE_TOP_FROM, ARTICLE_TOP_TO, pLayout));
+    const footerRect = resolveRect("footerBar", pLayout);
     const footerTop = footerRect ? footerRect.y : sy(FOOTER_TOP);
     const articleHeight = Math.max(1, footerTop - articleTop);
     const dynamicArticleScrollMax = Math.max(0, articleInner.scrollHeight - articleHeight);
@@ -813,17 +726,22 @@
       setRectPx(layers.article, articleRect.x, articleTop, articleRect.w, articleHeight);
     }
 
-    applyRect("footerBar", layers.footerBar, p);
-    applyRect("footerBg", layers.footerBg, p);
-    applyRect("status", layers.status, p);
-    applyRect("donate", layers.donate, p);
+    applyRect("donationBorder", layers.donationBorder, pLayout);
+    applyRect("footerBar", layers.footerBar, pLayout);
+    applyRect("footerBg", layers.footerBg, pLayout);
+    applyRect("donate", layers.donate, pLayout);
+    applyRect("donationForms", layers.donationForms, pLayout);
+    applyRect("donationInfo", layers.donationInfo, pLayout);
 
-    const progressRect = applyRect("progressFrame", layers.progressFrame, p);
-    shiftProgressLabels(p, progressRect);
+    const progressRect = applyRect("progressFrame", layers.progressFrame, pLayout);
+    shiftProgressLabels(pLayout, progressRect);
 
-    const introFade = fadeOut(p, 0.12, 0.56);
-    const landingFade = fadeOut(p, 0.18, 0.68);
-    const transformedFade = fadeIn(p, 0.62, 0.94);
+    const introFade = fadeOut(pLayout, 0.12, 0.56);
+    const landingFade = fadeOut(pLayout, 0.18, 0.68);
+    const transformedFade = fadeIn(pLayout, 0.62, 0.94);
+    const panelFade = fadeIn(pLayout, 0.52, 0.9);
+    const donateCompactFade = transformedFade * fadeOut(pLayout, 0.68, 0.86);
+    const panelContentFade = fadeIn(pLayout, 0.58, 0.92);
 
     setOpacity(layers.divider, landingFade);
     setOpacity(layers.rightGrey, landingFade);
@@ -834,21 +752,27 @@
     setOpacity(layers.nav, transformedFade);
     setOpacity(cutout, transformedFade);
     setOpacity(layers.article, transformedFade);
-    setOpacity(layers.footerBar, transformedFade);
-    setOpacity(layers.footerBg, transformedFade);
-    setOpacity(layers.status, transformedFade);
-    setOpacity(layers.donate, transformedFade);
+    setOpacity(layers.donationBorder, panelFade);
+    setOpacity(layers.footerBar, panelFade);
+    setOpacity(layers.footerBg, panelFade);
+    setOpacity(layers.donate, donateCompactFade);
+    setLayerVisible(layers.donationForms, panelContentFade);
+    setLayerVisible(layers.donationInfo, panelContentFade);
 
-    const revealLift = articleOffset > 0 ? 0 : sy(112) * fadeOut(p, 0.58, 1);
+    const revealLift = articleOffset > 0 ? 0 : sy(112) * fadeOut(pLayout, 0.58, 1);
     articleInner.style.transform = `translateY(${revealLift - articleOffset}px)`;
 
     const activeIndex = forcedIndex != null ? forcedIndex : activeSection(articleOffset, sy(articleHeight));
     updateCutout(activeIndex);
 
-    const frameLeft = progressRect ? progressRect.x : sx(lerp(99, 238, p));
-    const frameTop = progressRect ? progressRect.y : sy(lerp(468, 701, p));
-    const frameWidth = progressRect ? progressRect.w : sx(441);
-    const frameHeight = progressRect ? progressRect.h : sy(47);
+    const progressRectMetrics = progressRect;
+
+    const frameLeft = progressRectMetrics
+      ? progressRectMetrics.x
+      : sx(lerp(99, DONATION_LEFT_X, pLayout));
+    const frameTop = progressRectMetrics ? progressRectMetrics.y : sy(lerp(468, 701, pLayout));
+    const frameWidth = progressRectMetrics ? progressRectMetrics.w : sx(441);
+    const frameHeight = progressRectMetrics ? progressRectMetrics.h : sy(47);
     const frameStyle = window.getComputedStyle(layers.progressFrame);
     const border = parseFloat(frameStyle.borderLeftWidth) || 9;
     const innerInsetX = border + 1;
@@ -883,17 +807,14 @@
       forcedIndex = index;
       updateCutout(index);
       const sectionTarget = Math.max(0, target.offsetTop);
-      // Force article state so scrolling won't re-trigger transition.
       pageState = STATE_ARTICLE;
-      transitionT = 1;
-      transitionPhase = "idle";
       window.scrollTo({
         top: scene.offsetTop + transitionPx + sectionTarget,
-        behavior: prefersReduced ? "auto" : "smooth",
+        behavior: "auto",
       });
       window.setTimeout(() => {
         forcedIndex = null;
-      }, prefersReduced ? 0 : 700);
+      }, 0);
     });
   });
 
@@ -911,13 +832,10 @@
         const id = link.getAttribute("href")?.slice(1);
         const target = id ? document.getElementById(id) : null;
         const sectionTarget = target ? target.offsetTop : index * 220;
-        // Force article state so the scroll won't re-trigger the transition.
         pageState = STATE_ARTICLE;
-        transitionT = 1;
-        transitionPhase = "idle";
         window.scrollTo({
           top: scene.offsetTop + mobileArticleBaseStart + Math.max(0, sectionTarget),
-          behavior: prefersReduced ? "auto" : "smooth",
+          behavior: "auto",
         });
         mobileMenuOpen = false;
         document.body.classList.remove("menu-open");
@@ -934,29 +852,25 @@
   }
 
   window.addEventListener("resize", () => {
-    cachedMobileWelcomeEnd = 0;
-    cachedMobileTransitionStart = 0;
-    frozenZoneStartRel = null;
-    frozenZoneEndRel = null;
-    transitionPhase = "idle";
-    if (transitionRaf) {
-      window.cancelAnimationFrame(transitionRaf);
-      transitionRaf = 0;
+    const nowMobile = isMobileLayout();
+    if (nowMobile !== lastMobileBreakpoint) {
+      mobileMenuOpen = false;
+      document.body.classList.remove("menu-open");
     }
+    lastMobileBreakpoint = nowMobile;
+
+    cachedMobileWelcomeEnd = 0;
     updateSceneHeight();
     const realY = Math.max(0, window.scrollY - scene.offsetTop);
     if (realY >= getZoneEnd() - 40) {
       pageState = STATE_ARTICLE;
-      transitionT = 1;
     } else {
       pageState = STATE_WELCOME;
-      transitionT = 0;
     }
     render();
   });
   window.addEventListener("scroll", render, { passive: true });
 
-  prevScrollY = window.scrollY;
   updateSceneHeight();
   render();
 })();

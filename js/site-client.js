@@ -1,4 +1,8 @@
 (function () {
+  const prefersReducedMotion =
+    typeof window !== "undefined" &&
+    window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
   let BAR_LEFT = 109;
   let BAR_TOP = 478;
   let BAR_HEIGHT = 27;
@@ -60,6 +64,8 @@
       pendingEl.style.width = pendingWidth + "px";
       pendingEl.style.height = frameInnerHeight + "px";
       pendingEl.style.display = pendingWidth > 0 ? "block" : "none";
+      const pulseOn = pendingWidth > 0 && !prefersReducedMotion;
+      pendingEl.classList.toggle("progress-loan-pulse", pulseOn);
     }
     if (triangleEl) {
       triangleEl.style.left = collectedRight + "px";
@@ -113,12 +119,13 @@
   function applyStatusUpdates(updates) {
     const el = document.getElementById("layer-status");
     if (!el || !Array.isArray(updates) || updates.length === 0) return;
-    el.innerHTML = updates
+    const html = updates
       .map(
         (item) =>
-          `<strong>Status Update(${item.date || ""}):</strong> ${item.text || ""}<br>`
+          `<strong style="color:#4c4c4c;font-weight:500;">Status Update(${item.date || ""}):</strong> ${item.text || ""}<br>`
       )
       .join("");
+    el.innerHTML = html;
   }
 
   function applySettings(settings) {

@@ -61,7 +61,7 @@
       overflow: hidden;
     }
     .layer { position: absolute; }
-    #layer-hero-black { transition: height 220ms ease; }
+    #layer-hero-black { transition: none; }
 
     .hero-title, .hero-title span {
       font-family: "Futura Condensed", sans-serif;
@@ -112,26 +112,119 @@
     #layer-article section { margin-bottom: 26px; }
     #layer-article p, #layer-article ul { margin: 0 0 11px; }
 
+    #layer-donation-border {
+      background: #000;
+      opacity: 0;
+      z-index: 20;
+      pointer-events: none;
+    }
     #layer-footer-bg {
       background: #fdfdfb;
       opacity: 0;
-      z-index: 22;
+      z-index: 21;
+      overflow: hidden;
+      pointer-events: none;
     }
     #layer-footer-bar {
       background: #000;
       opacity: 0;
       z-index: 23;
+      pointer-events: none;
     }
-    #layer-status {
+    #layer-donation-info {
       opacity: 0;
-      z-index: 24;
-      background: #fdfdfb;
-      color: #808080;
-      font-size: clamp(11px, 0.95vw, 13px);
-      line-height: 1.3;
-      padding: 2px 4px;
+      z-index: 26;
+      pointer-events: none;
+      overflow: hidden;
+      box-sizing: border-box;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      padding: 4px 8px 6px;
     }
-    #layer-status strong { color: #4c4c4c; font-weight: 500; }
+    #layer-donation-info .donation-info-report-title,
+    #layer-donation-info .donation-info-finance-title {
+      margin: 0;
+      text-align: center;
+      font-weight: 700;
+      line-height: 1.25;
+      flex-shrink: 0;
+    }
+    #layer-donation-info #layer-status {
+      margin: 0;
+      padding: 0 2px;
+      max-height: 76px;
+      overflow-y: auto;
+      text-align: justify;
+      font-weight: 500;
+      line-height: 1.35;
+      flex-shrink: 0;
+    }
+    #layer-donation-info #layer-status strong {
+      font-weight: 500;
+    }
+    #layer-donation-info .donation-info-finance-block {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      flex-shrink: 0;
+    }
+    #layer-donation-info .donation-info-fin-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px 18px;
+    }
+    #layer-donation-info .donation-info-fin-col {
+      margin: 0;
+      text-align: justify;
+      font-weight: 500;
+      line-height: 1.35;
+    }
+    #layer-donation-info .donation-info-tranches {
+      margin: 0;
+      text-align: justify;
+      font-weight: 500;
+      line-height: 1.35;
+    }
+    #layer-donation-info .donation-info-bottom-row {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+      gap: 14px 18px;
+      align-items: start;
+      margin-top: auto;
+      flex-shrink: 0;
+    }
+    #layer-donation-info .donation-info-fin-note {
+      margin: 0;
+      text-align: justify;
+      font-weight: 500;
+      line-height: 1.35;
+    }
+    #layer-donation-info .donation-info-table {
+      width: 100%;
+      border-collapse: collapse;
+      table-layout: fixed;
+    }
+    #layer-donation-info .donation-info-table th,
+    #layer-donation-info .donation-info-table td {
+      padding: 3px 6px;
+      text-align: left;
+      font-weight: 500;
+      line-height: 1.3;
+      vertical-align: top;
+      border: 1px solid #808080;
+    }
+    #layer-donation-info .donation-info-table th {
+      font-weight: 700;
+    }
+    #layer-donation-info .donation-info-table td:last-child,
+    #layer-donation-info .donation-info-table th:last-child {
+      text-align: right;
+      width: 42%;
+    }
+    body.mobile-layout #layer-donation-info {
+      display: none !important;
+    }
     #layer-donate-compact {
       opacity: 0;
       z-index: 24;
@@ -141,6 +234,151 @@
       line-height: 1.04;
     }
 
+  /* Donation forms — layout/sizes in CSS; typography only via inline HTML on text nodes */
+    #layer-donation-forms {
+      opacity: 0;
+      z-index: 25;
+      pointer-events: none;
+      --donation-col-w: 562px;
+    }
+    #layer-donation-forms .donation-forms-title {
+      position: absolute;
+      left: 0;
+      top: 0;
+      width: var(--donation-col-w);
+      height: 26px;
+      margin: 0;
+      font-weight: 700;
+      line-height: 1.2;
+    }
+    #layer-donation-forms .donation-forms-panel {
+      position: absolute;
+      left: 0;
+      width: var(--donation-col-w);
+      background: #808080;
+      box-sizing: border-box;
+      overflow: hidden;
+      cursor: pointer;
+      transition: height 220ms ease, top 220ms ease, padding 220ms ease;
+    }
+    #layer-donation-forms .donation-forms-tab {
+      display: block;
+      width: 100%;
+      margin: 0;
+      padding: 0;
+      border: none;
+      background: none;
+      cursor: pointer;
+      text-align: left;
+      font: inherit;
+    }
+    #layer-donation-forms .donation-forms-badge {
+      margin: 0;
+      font-weight: 700;
+      line-height: 1.1;
+      letter-spacing: 0.02em;
+      pointer-events: none;
+    }
+    #layer-donation-forms .donation-forms-body {
+      display: none;
+      flex-direction: column;
+      flex: 1 1 auto;
+      min-height: 0;
+    }
+    #layer-donation-forms[data-active="jetzt"] .donation-forms-jetzt {
+      top: 30px;
+      height: 188px;
+      padding: 10px 12px 8px;
+    }
+    #layer-donation-forms[data-active="jetzt"] .donation-forms-jetzt .donation-forms-body {
+      display: flex;
+    }
+    #layer-donation-forms[data-active="jetzt"] .donation-forms-jetzt .donation-forms-badge {
+      margin: 0 0 8px;
+    }
+    #layer-donation-forms[data-active="jetzt"] .donation-forms-monatlich {
+      top: 222px;
+      height: 28px;
+      padding: 5px 12px;
+      display: flex;
+      align-items: center;
+    }
+    #layer-donation-forms[data-active="monatlich"] .donation-forms-jetzt {
+      top: 30px;
+      height: 28px;
+      padding: 5px 12px;
+      display: flex;
+      align-items: center;
+    }
+    #layer-donation-forms[data-active="monatlich"] .donation-forms-monatlich {
+      top: 62px;
+      height: 188px;
+      padding: 10px 12px 8px;
+    }
+    #layer-donation-forms[data-active="monatlich"] .donation-forms-monatlich .donation-forms-body {
+      display: flex;
+    }
+    #layer-donation-forms[data-active="monatlich"] .donation-forms-monatlich .donation-forms-badge {
+      margin: 0 0 8px;
+    }
+    @media (prefers-reduced-motion: reduce) {
+      #layer-donation-forms .donation-forms-panel {
+        transition: none;
+      }
+    }
+    #layer-donation-forms .donation-forms-field-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px 10px;
+      flex: 1 1 auto;
+      min-height: 0;
+      align-content: start;
+    }
+    #layer-donation-forms .donation-forms-field {
+      position: relative;
+      height: 34px;
+      background: #d9d9d9;
+    }
+    #layer-donation-forms .donation-forms-field--email {
+      grid-column: 1 / -1;
+      width: calc((100% - 10px) * 0.75);
+    }
+    #layer-donation-forms .donation-forms-field--betrag {
+      grid-column: 1 / -1;
+      width: calc((100% - 10px) * 0.75);
+      height: 68px;
+    }
+    #layer-donation-forms .donation-forms-field span {
+      position: absolute;
+      left: 10px;
+      top: 50%;
+      transform: translateY(-50%);
+      font-weight: 500;
+      text-transform: uppercase;
+      pointer-events: none;
+      white-space: nowrap;
+    }
+    #layer-donation-forms .donation-forms-field--betrag > span:first-child {
+      top: 10px;
+      transform: none;
+    }
+    #layer-donation-forms .donation-forms-euro {
+      position: absolute;
+      right: 12px;
+      top: 50%;
+      transform: translateY(-50%);
+      font-weight: 500;
+      pointer-events: none;
+    }
+    #layer-donation-forms .donation-forms-payment {
+      margin: 6px 0 0;
+      text-align: center;
+      font-weight: 500;
+      line-height: 1.2;
+    }
+    #layer-donation-forms .donation-forms-payment .payment-paypal {
+      font-style: italic;
+    }
     #progress-group { position: absolute; inset: 0; z-index: 30; pointer-events: none; }
     #progress-group > * { pointer-events: auto; position: absolute; }
     #progressFrame {
@@ -149,7 +387,25 @@
       border: 9px solid #808080;
     }
     #progressFill { background: #000; z-index: 2; }
-    #progressPending { background: rgba(0,0,0,0.2); z-index: 1; }
+    #progressPending { background: rgba(0, 0, 0, 0.22); z-index: 1; }
+    @keyframes progress-loan-pulse-opacity {
+      0%,
+      100% {
+        opacity: 0.38;
+      }
+      50% {
+        opacity: 0.92;
+      }
+    }
+    #progressPending.progress-loan-pulse {
+      animation: progress-loan-pulse-opacity 2.4s ease-in-out infinite;
+    }
+    @media (prefers-reduced-motion: reduce) {
+      #progressPending.progress-loan-pulse {
+        animation: none;
+        opacity: 0.6;
+      }
+    }
     #goalAmount {
       color: #808080;
       font-weight: 700;
@@ -270,6 +526,22 @@
     body.mobile-layout #layer-status { display: none !important; }
     body.mobile-layout .date-label,
     body.mobile-layout .add-label { display: none; }
+
+    #article-scroll-inner .article-legal-links {
+      margin-top: 48px;
+      padding-bottom: 32px;
+      font-size: 9px;
+      line-height: 1.45;
+      color: #808080;
+    }
+    #article-scroll-inner .article-legal-links a {
+      color: #606060;
+      text-decoration: underline;
+    }
+    #article-scroll-inner .article-legal-links a:hover {
+      color: #111;
+    }
+
   </style>
 </head>
 <body>
@@ -280,7 +552,7 @@
     <a href="#section-finance" data-mobile-nav="2">Die Finanzierung</a>
     <a href="#section-circle" data-mobile-nav="3">Der Förderkreis</a>
   </nav>
-  <div id="build-tag">build 2026-05-16-1935</div>
+  <div id="build-tag">build 202605171800</div>
   <div class="scene" id="scene">
     <div id="figma-frame">
       <div id="layer-left-bg" class="layer" style="left:0;top:0;width:577px;height:833px;background:#fdfdfb;"></div>
@@ -358,12 +630,115 @@
     <p>Eure Förderung ist nicht einfach nur eine Wohltätigkeit. Sie schafft soziale Mobilität in unserer Gesellschaft und ist eine Investition in jemanden, der im Gegenzug politische Verantwortung übernimmt und sich für uns alle in den Dienst der Gesellschaft stellt. Ihr könnt euch nicht vorstellen, was dieser Master für mich bedeutet. Für eure Unterstützung bin ich euch von tiefstem Herzen dankbar!</p>
     <p>Wendet euch jederzeit mit Fragen oder Anregungen und Ideen an mich: <a href="mailto:michael.thomsen@uni-wh.de">michael.thomsen@uni-wh.de</a> oder mobil: 0176/32706602</p>
   </section>
+        <footer class="article-legal-links" aria-label="Rechtliches">
+          <a href="./impressum.html">Impressum</a>
+          <span aria-hidden="true"> · </span>
+          <a href="./datenschutz.html">Datenschutzerklärung</a>
+          <span aria-hidden="true"> · </span>
+          <a href="./agb.html">AGB</a>
+        </footer>
       </div>
       </article>
 
-      <div id="layer-footer-bar" class="layer" style="left:0;top:640px;width:1280px;height:19px;"></div>
+      <div id="layer-donation-border" class="layer" style="left:0;top:640px;width:1280px;height:19px;"></div>
       <div id="layer-footer-bg" class="layer" style="left:0;top:659px;width:1280px;height:173px;"></div>
-      <div id="layer-status" class="layer" style="left:720px;top:676px;width:350px;height:96px;"></div>
+      <div id="layer-footer-bar" class="layer" style="left:0;top:640px;width:1280px;height:19px;"></div>
+
+      <div id="layer-donation-info" class="layer" style="left:654px;top:500px;width:562px;height:300px;" aria-label="Fortschritt und Finanzierung">
+        <p class="donation-info-report-title" style="font-size:13px;color:#808080;">Fortschrittsbericht</p>
+        <div id="layer-status" style="font-size:11px;color:#808080;"></div>
+        <div class="donation-info-finance-block">
+          <p class="donation-info-finance-title" style="font-size:13px;color:#808080;">Finanzierung</p>
+          <div class="donation-info-fin-row">
+          <p class="donation-info-fin-col" style="font-size:12px;color:#4c4c4c;">
+            Die regulären Studiengebühren des Masters betragen:<br />
+            <span style="font-size:12px;color:#000000;font-weight:700;">38.500</span><span style="font-size:12px;color:#4c4c4c;"> €</span>
+          </p>
+          <p class="donation-info-fin-col" style="font-size:12px;color:#4c4c4c;">
+            Durch ein Teilstipendium von 35&nbsp;% das ich erwerben konnte, muss ich nur noch<br />
+            <span style="font-size:12px;color:#000000;font-weight:700;">25.025</span><span style="font-size:12px;color:#4c4c4c;"> €</span> zahlen.
+          </p>
+          </div>
+          <p class="donation-info-tranches" style="font-size:12px;color:#808080;">
+            Die Studiengebühren werden in fünf Tranchen über zwei Jahre ausgezahlt:
+          </p>
+        </div>
+        <div class="donation-info-bottom-row">
+          <table class="donation-info-table">
+            <thead>
+              <tr>
+                <th scope="col" style="font-size:11px;color:#808080;">Zahlungszeitpunkt</th>
+                <th scope="col" style="font-size:11px;color:#808080;">Betrag</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td style="font-size:11px;color:#4c4c4c;">15.06.2026</td>
+                <td style="font-size:11px;color:#000000;">4.756,25 €</td>
+              </tr>
+              <tr>
+                <td style="font-size:11px;color:#4c4c4c;">01.09.2026</td>
+                <td style="font-size:11px;color:#000000;">5.004,69 €</td>
+              </tr>
+              <tr>
+                <td style="font-size:11px;color:#4c4c4c;">01.03.2027</td>
+                <td style="font-size:11px;color:#000000;">5.004,69 €</td>
+              </tr>
+              <tr>
+                <td style="font-size:11px;color:#4c4c4c;">01.09.2027</td>
+                <td style="font-size:11px;color:#000000;">5.004,69 €</td>
+              </tr>
+              <tr>
+                <td style="font-size:11px;color:#4c4c4c;">01.03.2028</td>
+                <td style="font-size:11px;color:#000000;">5.254,68 €</td>
+              </tr>
+            </tbody>
+          </table>
+          <p class="donation-info-fin-note" style="font-size:12px;color:#4c4c4c;">
+            Den aktuellen Stand von Spenden und zinslosen Privat-Darlehen können Sie dem Spendenbarometer entnehmen.
+          </p>
+        </div>
+      </div>
+
+      <div id="layer-donation-forms" class="layer" data-active="jetzt" style="left:64px;top:500px;width:562px;height:278px;" aria-label="Spendenformular">
+        <p class="donation-forms-title" style="font-size:17px;color:#000000;">Ihr könnt mich auf folgende Weise unterstützen:</p>
+        <div class="donation-forms-panel donation-forms-jetzt" data-panel="jetzt">
+          <button type="button" class="donation-forms-tab" aria-expanded="true" aria-controls="donation-forms-body-jetzt">
+            <span class="donation-forms-badge" style="font-size:18px;color:#ffffff;">• JETZT</span>
+          </button>
+          <div id="donation-forms-body-jetzt" class="donation-forms-body">
+            <div class="donation-forms-field-grid">
+              <div class="donation-forms-field"><span style="font-size:14px;color:#a6a6a6;">NAME</span></div>
+              <div class="donation-forms-field"><span style="font-size:14px;color:#a6a6a6;">NACHNAME</span></div>
+              <div class="donation-forms-field donation-forms-field--email"><span style="font-size:14px;color:#a6a6a6;">E-MAIL</span></div>
+              <div class="donation-forms-field donation-forms-field--betrag">
+                <span style="font-size:14px;color:#a6a6a6;">BETRAG</span>
+                <span class="donation-forms-euro" style="font-size:14px;color:#a6a6a6;">€</span>
+              </div>
+            </div>
+            <p class="donation-forms-payment" style="font-size:16px;color:#ffffff;">
+              <span class="payment-paypal">PayPal</span> / Überweisung
+            </p>
+          </div>
+        </div>
+        <div class="donation-forms-panel donation-forms-monatlich" data-panel="monatlich">
+          <button type="button" class="donation-forms-tab" aria-expanded="false" aria-controls="donation-forms-body-monatlich">
+            <span class="donation-forms-badge" style="font-size:18px;color:#ffffff;">• MONATLICH</span>
+          </button>
+          <div id="donation-forms-body-monatlich" class="donation-forms-body">
+            <div class="donation-forms-field-grid">
+              <div class="donation-forms-field"><span style="font-size:14px;color:#a6a6a6;">NAME</span></div>
+              <div class="donation-forms-field"><span style="font-size:14px;color:#a6a6a6;">NACHNAME</span></div>
+              <div class="donation-forms-field donation-forms-field--email"><span style="font-size:14px;color:#a6a6a6;">E-MAIL</span></div>
+              <div class="donation-forms-field donation-forms-field--betrag">
+                <span style="font-size:14px;color:#a6a6a6;">BETRAG</span>
+                <span class="donation-forms-euro" style="font-size:14px;color:#a6a6a6;">€</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
       <div id="layer-donate-compact" class="layer" style="left:74px;top:698px;width:148px;height:59px;"><span id="ctaText">SPENDEN</span><br>HIER!</div>
 
       <div id="progress-group">
@@ -379,7 +754,9 @@
       </div>
     </div>
   </div>
-  <script src="./js/site-client.js?v=202605161935"></script>
-  <script src="./js/scroll-transition.js?v=202605161935"></script>
+
+  <script src="./js/site-client.js?v=202605171800"></script>
+  <script src="./js/donation-forms.js?v=202605171800"></script>
+  <script src="./js/scroll-transition.js?v=202605171800"></script>
 </body>
 </html>

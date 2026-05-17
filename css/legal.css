@@ -1,0 +1,57 @@
+@font-face {
+  font-family: "Futura";
+  src:
+    local("Futura Medium"),
+    url("../fonts/futura-medium.ttf") format("truetype");
+  font-weight: 500;
+  font-display: swap;
+}
+
+html {
+  margin: 0;
+  background: #fdfdfb;
+  color: #111;
+  font-family: "Futura", Arial, sans-serif;
+  font-size: 15px;
+  line-height: 1.45;
+}
+
+body {
+  margin: 0 auto;
+  max-width: 44rem;
+  padding: 28px 18px 48px;
+}
+
+a {
+  color: #333;
+}
+
+.back {
+  font-size: 13px;
+  margin-bottom: 24px;
+}
+
+h1 {
+  font-size: 1.35rem;
+  font-weight: 700;
+  margin: 0 0 16px;
+}
+
+h2 {
+  font-size: 1.05rem;
+  font-weight: 700;
+  margin: 22px 0 10px;
+}
+
+p {
+  margin: 0 0 12px;
+}
+
+ul {
+  margin: 0 0 12px;
+  padding-left: 1.2rem;
+}
+
+li {
+  margin-bottom: 6px;
+}
