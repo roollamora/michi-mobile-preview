@@ -47,10 +47,24 @@
     (DONATION_WHITE_W - DONATION_PANEL_INNER * 2 - DONATION_COL_GAP) / 2;
   const DONATION_LEFT_X = DONATION_PANEL_PAD_X + DONATION_PANEL_INNER;
   const DONATION_RIGHT_X = DONATION_LEFT_X + DONATION_COL_W + DONATION_COL_GAP;
-  const DONATION_TOP_Y = 500;
+  const FOOTER_WHITE_Y = 307;
+  const FOOTER_WHITE_H = 519;
   const DONATION_FORMS_H = 278;
-  const DONATION_INFO_H = 300;
-  const DONATION_PROGRESS_Y = DONATION_TOP_Y + DONATION_FORMS_H + 14;
+  const DONATION_PROGRESS_H = 47;
+  const DONATION_PROGRESS_GAP = 14;
+  const DONATION_LEFT_MIN_H =
+    DONATION_FORMS_H + DONATION_PROGRESS_GAP + DONATION_PROGRESS_H;
+  const FOOTER_INNER_TOP = FOOTER_WHITE_Y + DONATION_PANEL_INNER;
+  const FOOTER_INNER_H = FOOTER_WHITE_H - DONATION_PANEL_INNER * 2;
+  const DONATION_COLUMN_H = Math.min(
+    FOOTER_INNER_H,
+    Math.max(DONATION_LEFT_MIN_H, 400)
+  );
+  const DONATION_COL_TOP =
+    FOOTER_INNER_TOP + (FOOTER_INNER_H - DONATION_COLUMN_H) / 2;
+  const DONATION_TOP_Y = DONATION_COL_TOP;
+  const DONATION_PROGRESS_Y =
+    DONATION_COL_TOP + DONATION_COLUMN_H - DONATION_PROGRESS_H;
   /** Viewports narrower than this use ribbon / stacked layout (no desktop scene proportions). */
   const MOBILE_LAYOUT_MAX_WIDTH_PX = 520;
   const FOOTER_TOP = 640;
@@ -175,9 +189,9 @@
         from: { x: 720, y: 676, w: 350, h: 96 },
         to: {
           x: DONATION_RIGHT_X,
-          y: DONATION_TOP_Y,
+          y: DONATION_COL_TOP,
           w: DONATION_COL_W,
-          h: DONATION_INFO_H,
+          h: DONATION_COLUMN_H,
         },
       },
       progressFrame: {
@@ -412,7 +426,9 @@
     const frameLeft = progressRect
       ? progressRect.x
       : sx(lerp(99, DONATION_LEFT_X, p));
-    const frameTop = progressRect ? progressRect.y : sy(lerp(468, 701, p));
+    const frameTop = progressRect
+      ? progressRect.y
+      : sy(lerp(468, DONATION_PROGRESS_Y, p));
     const frameWidth = progressRect ? progressRect.w : sx(441);
     const frameRight = frameLeft + frameWidth;
 
@@ -770,7 +786,9 @@
     const frameLeft = progressRectMetrics
       ? progressRectMetrics.x
       : sx(lerp(99, DONATION_LEFT_X, pLayout));
-    const frameTop = progressRectMetrics ? progressRectMetrics.y : sy(lerp(468, 701, pLayout));
+    const frameTop = progressRectMetrics
+      ? progressRectMetrics.y
+      : sy(lerp(468, DONATION_PROGRESS_Y, pLayout));
     const frameWidth = progressRectMetrics ? progressRectMetrics.w : sx(441);
     const frameHeight = progressRectMetrics ? progressRectMetrics.h : sy(47);
     const frameStyle = window.getComputedStyle(layers.progressFrame);

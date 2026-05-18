@@ -139,6 +139,7 @@
       box-sizing: border-box;
       display: flex;
       flex-direction: column;
+      justify-content: center;
       gap: 10px;
       padding: 4px 8px 6px;
     }
@@ -191,7 +192,6 @@
       grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
       gap: 14px 18px;
       align-items: start;
-      margin-top: auto;
       flex-shrink: 0;
     }
     #layer-donation-info .donation-info-fin-note {
@@ -600,7 +600,7 @@
     <a href="#section-finance" data-mobile-nav="2">Die Finanzierung</a>
     <a href="#section-circle" data-mobile-nav="3">Der Förderkreis</a>
   </nav>
-  <div id="build-tag">build 202605172100 <a href="./admin.html" title="Admin">admin</a></div>
+  <div id="build-tag">build 202605172200 <a href="./admin.html" title="Admin">admin</a></div>
   <div class="scene" id="scene">
     <div id="figma-frame">
       <div id="layer-left-bg" class="layer" style="left:0;top:0;width:577px;height:833px;background:#fdfdfb;"></div>
@@ -692,7 +692,7 @@
       <div id="layer-footer-bg" class="layer" style="left:0;top:659px;width:1280px;height:173px;"></div>
       <div id="layer-footer-bar" class="layer" style="left:0;top:640px;width:1280px;height:19px;"></div>
 
-      <div id="layer-donation-info" class="layer" style="left:654px;top:500px;width:562px;height:300px;" aria-label="Fortschritt und Finanzierung">
+      <div id="layer-donation-info" class="layer" style="left:654px;top:367px;width:562px;height:400px;" aria-label="Fortschritt und Finanzierung">
         <p class="donation-info-report-title" style="font-size:13px;color:#808080;">Fortschrittsbericht</p>
         <div id="layer-status" style="font-size:11px;color:#808080;"></div>
         <div class="donation-info-finance-block">
@@ -748,7 +748,7 @@
         </div>
       </div>
 
-      <div id="layer-donation-forms" class="layer" data-active="jetzt" style="left:64px;top:500px;width:562px;height:278px;" aria-label="Spendenformular">
+      <div id="layer-donation-forms" class="layer" data-active="jetzt" style="left:64px;top:367px;width:562px;height:278px;" aria-label="Spendenformular">
         <p class="donation-forms-title" style="font-size:17px;color:#000000;">Ihr könnt mich auf folgende Weise unterstützen:</p>
         <div class="donation-forms-panel donation-forms-jetzt" data-panel="jetzt">
           <button type="button" class="donation-forms-tab" aria-expanded="true" aria-controls="donation-forms-body-jetzt">
@@ -829,6 +829,6 @@
 
   <script src="./js/site-client.js?v=202605171900"></script>
   <script src="./js/donation-forms.js?v=202605172100"></script>
-  <script src="./js/scroll-transition.js?v=202605171800"></script>
+  <script src="./js/scroll-transition.js?v=202605172200"></script>
 </body>
 </html>
