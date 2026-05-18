@@ -55,6 +55,37 @@
 
   root.querySelectorAll('input[name="betrag"]').forEach(attachBetragInput);
 
+  function sanitizeNaturalNumber(value) {
+    let digits = String(value).replace(/\D/g, "");
+    if (!digits) return "";
+    digits = digits.replace(/^0+/, "");
+    return digits;
+  }
+
+  function attachNaturalNumberInput(input) {
+    input.addEventListener("input", () => {
+      const cursor = input.selectionStart ?? input.value.length;
+      const next = sanitizeNaturalNumber(input.value);
+      if (input.value === next) return;
+      input.value = next;
+      const pos = Math.min(cursor, next.length);
+      input.setSelectionRange(pos, pos);
+    });
+
+    input.addEventListener("paste", (event) => {
+      event.preventDefault();
+      const clip = event.clipboardData?.getData("text") ?? "";
+      const start = input.selectionStart ?? input.value.length;
+      const end = input.selectionEnd ?? input.value.length;
+      const merged = input.value.slice(0, start) + clip + input.value.slice(end);
+      input.value = sanitizeNaturalNumber(merged);
+      const pos = input.value.length;
+      input.setSelectionRange(pos, pos);
+    });
+  }
+
+  root.querySelectorAll('input[name="monate"]').forEach(attachNaturalNumberInput);
+
   function setActive(mode) {
     if (mode !== "jetzt" && mode !== "monatlich") return;
     if (root.dataset.active === mode) return;
