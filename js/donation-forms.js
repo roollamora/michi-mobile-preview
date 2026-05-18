@@ -101,6 +101,10 @@
     }
   }
 
+  const donateCta = document.getElementById("donation-forms-cta");
+  donateCta?.addEventListener("click", (event) => event.stopPropagation());
+  donateCta?.addEventListener("mousedown", (event) => event.stopPropagation());
+
   root.querySelectorAll("input, .donation-forms-betrag-wrap").forEach((el) => {
     el.addEventListener("click", (event) => event.stopPropagation());
     el.addEventListener("mousedown", (event) => event.stopPropagation());
@@ -120,7 +124,7 @@
     panel.addEventListener("click", (event) => {
       if (
         event.target.closest(
-          ".donation-forms-field, .donation-forms-betrag-wrap, input, label"
+          ".donation-forms-field, .donation-forms-betrag-wrap, .donation-forms-footer, input, label, #donation-forms-cta"
         )
       ) {
         return;
