@@ -344,18 +344,7 @@
       max-width: 100%;
       background: #d9d9d9;
     }
-    #layer-donation-forms .donation-forms-field--email {
-      grid-column: 1 / -1;
-      width: 75%;
-      max-width: 100%;
-    }
-    #layer-donation-forms .donation-forms-field--betrag {
-      grid-column: 1 / -1;
-      width: 75%;
-      max-width: 100%;
-      height: 68px;
-    }
-    #layer-donation-forms .donation-forms-field span {
+    #layer-donation-forms .donation-forms-field label {
       position: absolute;
       left: 10px;
       top: 50%;
@@ -364,17 +353,62 @@
       text-transform: uppercase;
       pointer-events: none;
       white-space: nowrap;
+      z-index: 1;
     }
-    #layer-donation-forms .donation-forms-field--betrag > span:first-child {
+    #layer-donation-forms .donation-forms-field input {
+      display: block;
+      width: 100%;
+      height: 100%;
+      margin: 0;
+      padding: 14px 10px 2px;
+      border: none;
+      background: transparent;
+      font-family: inherit;
+      font-weight: 500;
+      font-size: 14px;
+      color: #000;
+      outline: none;
+      box-sizing: border-box;
+    }
+    #layer-donation-forms .donation-forms-field:focus-within label,
+    #layer-donation-forms .donation-forms-field:has(input:not(:placeholder-shown)) label {
+      opacity: 0;
+    }
+    #layer-donation-forms .donation-forms-field input:focus {
+      outline: 2px solid #4c4c4c;
+      outline-offset: -2px;
+    }
+    #layer-donation-forms .donation-forms-field--email {
+      grid-column: 1 / -1;
+      width: 75%;
+      max-width: 100%;
+    }
+    #layer-donation-forms .donation-forms-betrag-wrap {
+      grid-column: 1 / -1;
+      display: flex;
+      align-items: flex-end;
+      gap: 8px;
+      width: calc((100% - 10px) / 2);
+      max-width: 100%;
+    }
+    #layer-donation-forms .donation-forms-field--betrag {
+      flex: 1 1 auto;
+      min-width: 0;
+      height: 68px;
+    }
+    #layer-donation-forms .donation-forms-field--betrag label {
       top: 10px;
       transform: none;
     }
+    #layer-donation-forms .donation-forms-field--betrag input {
+      padding-top: 30px;
+    }
     #layer-donation-forms .donation-forms-euro {
-      position: absolute;
-      right: 12px;
-      top: 50%;
-      transform: translateY(-50%);
+      flex: 0 0 auto;
+      align-self: flex-end;
+      padding-bottom: 10px;
       font-weight: 500;
+      line-height: 1;
       pointer-events: none;
     }
     #layer-donation-forms .donation-forms-payment {
@@ -566,7 +600,7 @@
     <a href="#section-finance" data-mobile-nav="2">Die Finanzierung</a>
     <a href="#section-circle" data-mobile-nav="3">Der Förderkreis</a>
   </nav>
-  <div id="build-tag">build 202605172000 <a href="./admin.html" title="Admin">admin</a></div>
+  <div id="build-tag">build 202605172100 <a href="./admin.html" title="Admin">admin</a></div>
   <div class="scene" id="scene">
     <div id="figma-frame">
       <div id="layer-left-bg" class="layer" style="left:0;top:0;width:577px;height:833px;background:#fdfdfb;"></div>
@@ -722,12 +756,24 @@
           </button>
           <div id="donation-forms-body-jetzt" class="donation-forms-body">
             <div class="donation-forms-field-grid">
-              <div class="donation-forms-field"><span style="font-size:14px;color:#a6a6a6;">NAME</span></div>
-              <div class="donation-forms-field"><span style="font-size:14px;color:#a6a6a6;">NACHNAME</span></div>
-              <div class="donation-forms-field donation-forms-field--email"><span style="font-size:14px;color:#a6a6a6;">E-MAIL</span></div>
-              <div class="donation-forms-field donation-forms-field--betrag">
-                <span style="font-size:14px;color:#a6a6a6;">BETRAG</span>
-                <span class="donation-forms-euro" style="font-size:14px;color:#a6a6a6;">€</span>
+              <div class="donation-forms-field">
+                <label for="donation-jetzt-name" style="font-size:14px;color:#a6a6a6;">NAME</label>
+                <input id="donation-jetzt-name" type="text" name="name" autocomplete="given-name" placeholder=" " />
+              </div>
+              <div class="donation-forms-field">
+                <label for="donation-jetzt-nachname" style="font-size:14px;color:#a6a6a6;">NACHNAME</label>
+                <input id="donation-jetzt-nachname" type="text" name="nachname" autocomplete="family-name" placeholder=" " />
+              </div>
+              <div class="donation-forms-field donation-forms-field--email">
+                <label for="donation-jetzt-email" style="font-size:14px;color:#a6a6a6;">E-MAIL</label>
+                <input id="donation-jetzt-email" type="email" name="email" autocomplete="email" placeholder=" " />
+              </div>
+              <div class="donation-forms-betrag-wrap">
+                <div class="donation-forms-field donation-forms-field--betrag">
+                  <label for="donation-jetzt-betrag" style="font-size:21px;color:#a6a6a6;">BETRAG</label>
+                  <input id="donation-jetzt-betrag" type="text" name="betrag" inputmode="decimal" autocomplete="off" placeholder=" " style="font-size:21px;color:#000000;" />
+                </div>
+                <span class="donation-forms-euro" style="font-size:21px;color:#a6a6a6;">€</span>
               </div>
             </div>
             <p class="donation-forms-payment" style="font-size:16px;color:#ffffff;">
@@ -741,12 +787,24 @@
           </button>
           <div id="donation-forms-body-monatlich" class="donation-forms-body">
             <div class="donation-forms-field-grid">
-              <div class="donation-forms-field"><span style="font-size:14px;color:#a6a6a6;">NAME</span></div>
-              <div class="donation-forms-field"><span style="font-size:14px;color:#a6a6a6;">NACHNAME</span></div>
-              <div class="donation-forms-field donation-forms-field--email"><span style="font-size:14px;color:#a6a6a6;">E-MAIL</span></div>
-              <div class="donation-forms-field donation-forms-field--betrag">
-                <span style="font-size:14px;color:#a6a6a6;">BETRAG</span>
-                <span class="donation-forms-euro" style="font-size:14px;color:#a6a6a6;">€</span>
+              <div class="donation-forms-field">
+                <label for="donation-monatlich-name" style="font-size:14px;color:#a6a6a6;">NAME</label>
+                <input id="donation-monatlich-name" type="text" name="name" autocomplete="given-name" placeholder=" " />
+              </div>
+              <div class="donation-forms-field">
+                <label for="donation-monatlich-nachname" style="font-size:14px;color:#a6a6a6;">NACHNAME</label>
+                <input id="donation-monatlich-nachname" type="text" name="nachname" autocomplete="family-name" placeholder=" " />
+              </div>
+              <div class="donation-forms-field donation-forms-field--email">
+                <label for="donation-monatlich-email" style="font-size:14px;color:#a6a6a6;">E-MAIL</label>
+                <input id="donation-monatlich-email" type="email" name="email" autocomplete="email" placeholder=" " />
+              </div>
+              <div class="donation-forms-betrag-wrap">
+                <div class="donation-forms-field donation-forms-field--betrag">
+                  <label for="donation-monatlich-betrag" style="font-size:21px;color:#a6a6a6;">BETRAG</label>
+                  <input id="donation-monatlich-betrag" type="text" name="betrag" inputmode="decimal" autocomplete="off" placeholder=" " style="font-size:21px;color:#000000;" />
+                </div>
+                <span class="donation-forms-euro" style="font-size:21px;color:#a6a6a6;">€</span>
               </div>
             </div>
           </div>
@@ -770,7 +828,7 @@
   </div>
 
   <script src="./js/site-client.js?v=202605171900"></script>
-  <script src="./js/donation-forms.js?v=202605171800"></script>
+  <script src="./js/donation-forms.js?v=202605172100"></script>
   <script src="./js/scroll-transition.js?v=202605171800"></script>
 </body>
 </html>

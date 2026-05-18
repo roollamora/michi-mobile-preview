@@ -24,9 +24,20 @@
     }
   }
 
+  root.querySelectorAll("input, label, .donation-forms-betrag-wrap").forEach((el) => {
+    el.addEventListener("click", (event) => event.stopPropagation());
+    el.addEventListener("mousedown", (event) => event.stopPropagation());
+  });
+
   root.querySelectorAll(".donation-forms-panel").forEach((panel) => {
     panel.addEventListener("click", (event) => {
-      if (event.target.closest(".donation-forms-field")) return;
+      if (
+        event.target.closest(
+          ".donation-forms-field, .donation-forms-betrag-wrap, input, label"
+        )
+      ) {
+        return;
+      }
       const mode = panel.getAttribute("data-panel");
       if (mode) setActive(mode);
     });
