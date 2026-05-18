@@ -339,28 +339,31 @@
       align-content: start;
     }
     #layer-donation-forms .donation-forms-field {
-      position: relative;
+      display: flex;
+      flex-direction: row;
+      align-items: center;
+      gap: 8px;
       height: 34px;
       max-width: 100%;
+      padding: 0 10px;
       background: #d9d9d9;
+      box-sizing: border-box;
     }
     #layer-donation-forms .donation-forms-field label {
-      position: absolute;
-      left: 10px;
-      top: 50%;
-      transform: translateY(-50%);
+      position: static;
+      transform: none;
+      flex: 0 0 auto;
       font-weight: 500;
       text-transform: uppercase;
       pointer-events: none;
       white-space: nowrap;
-      z-index: 1;
     }
     #layer-donation-forms .donation-forms-field input {
-      display: block;
-      width: 100%;
-      height: 100%;
+      flex: 1 1 auto;
+      min-width: 0;
+      height: auto;
       margin: 0;
-      padding: 14px 10px 2px;
+      padding: 0;
       border: none;
       background: transparent;
       font-family: inherit;
@@ -370,8 +373,10 @@
       outline: none;
       box-sizing: border-box;
     }
-    #layer-donation-forms .donation-forms-field:focus-within label,
-    #layer-donation-forms .donation-forms-field:has(input:not(:placeholder-shown)) label {
+    #layer-donation-forms .donation-forms-field:not(.donation-forms-field--betrag):focus-within label,
+    #layer-donation-forms
+      .donation-forms-field:not(.donation-forms-field--betrag):has(input:not(:placeholder-shown))
+      label {
       opacity: 0;
     }
     #layer-donation-forms .donation-forms-field input:focus {
@@ -609,7 +614,7 @@
     <a href="#section-finance" data-mobile-nav="2">Die Finanzierung</a>
     <a href="#section-circle" data-mobile-nav="3">Der Förderkreis</a>
   </nav>
-  <div id="build-tag">build 202605172300 <a href="./admin.html" title="Admin">admin</a></div>
+  <div id="build-tag">build 202605172400 <a href="./admin.html" title="Admin">admin</a></div>
   <div class="scene" id="scene">
     <div id="figma-frame">
       <div id="layer-left-bg" class="layer" style="left:0;top:0;width:577px;height:833px;background:#fdfdfb;"></div>
