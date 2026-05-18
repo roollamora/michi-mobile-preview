@@ -386,27 +386,36 @@
     #layer-donation-forms .donation-forms-betrag-wrap {
       grid-column: 1 / -1;
       display: flex;
-      align-items: flex-end;
+      align-items: center;
       gap: 8px;
       width: calc((100% - 10px) / 2);
       max-width: 100%;
     }
     #layer-donation-forms .donation-forms-field--betrag {
+      display: flex;
+      flex-direction: row;
+      align-items: center;
+      gap: 8px;
       flex: 1 1 auto;
       min-width: 0;
       height: 68px;
+      padding: 0 10px;
     }
     #layer-donation-forms .donation-forms-field--betrag label {
-      top: 10px;
+      position: static;
       transform: none;
+      flex: 0 0 auto;
+      opacity: 1;
     }
     #layer-donation-forms .donation-forms-field--betrag input {
-      padding-top: 30px;
+      flex: 1 1 auto;
+      min-width: 0;
+      height: auto;
+      margin: 0;
+      padding: 0;
     }
     #layer-donation-forms .donation-forms-euro {
       flex: 0 0 auto;
-      align-self: flex-end;
-      padding-bottom: 10px;
       font-weight: 500;
       line-height: 1;
       pointer-events: none;
@@ -600,7 +609,7 @@
     <a href="#section-finance" data-mobile-nav="2">Die Finanzierung</a>
     <a href="#section-circle" data-mobile-nav="3">Der Förderkreis</a>
   </nav>
-  <div id="build-tag">build 202605172200 <a href="./admin.html" title="Admin">admin</a></div>
+  <div id="build-tag">build 202605172300 <a href="./admin.html" title="Admin">admin</a></div>
   <div class="scene" id="scene">
     <div id="figma-frame">
       <div id="layer-left-bg" class="layer" style="left:0;top:0;width:577px;height:833px;background:#fdfdfb;"></div>
@@ -828,7 +837,7 @@
   </div>
 
   <script src="./js/site-client.js?v=202605171900"></script>
-  <script src="./js/donation-forms.js?v=202605172100"></script>
+  <script src="./js/donation-forms.js?v=202605172300"></script>
   <script src="./js/scroll-transition.js?v=202605172200"></script>
 </body>
 </html>
