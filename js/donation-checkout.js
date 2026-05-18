@@ -1,13 +1,13 @@
 (function () {
   const overlay = document.getElementById("donation-checkout-overlay");
   const formsRoot = document.getElementById("layer-donation-forms");
-  const cta = document.getElementById("donation-forms-cta");
+  const ctas = document.querySelectorAll(".donation-forms-panel-cta");
   const summaryEl = document.getElementById("donation-checkout-summary");
   const paypalBtn = document.getElementById("donation-checkout-paypal");
   const submitBtn = document.getElementById("donation-checkout-submit");
   const closeBtn = document.querySelector(".donation-checkout-close");
 
-  if (!overlay || !formsRoot || !cta || !summaryEl) return;
+  if (!overlay || !formsRoot || !ctas.length || !summaryEl) return;
 
   function getActiveMode() {
     return formsRoot.dataset.active === "monatlich" ? "monatlich" : "jetzt";
@@ -73,9 +73,15 @@
     document.body.classList.remove("checkout-open");
   }
 
-  cta.addEventListener("click", (event) => {
-    event.stopPropagation();
-    openCheckout();
+  ctas.forEach((cta) => {
+    cta.addEventListener("click", (event) => {
+      event.stopPropagation();
+      const mode = cta.getAttribute("data-panel-cta");
+      if (mode === "jetzt" || mode === "monatlich") {
+        formsRoot.dataset.active = mode;
+      }
+      openCheckout();
+    });
   });
 
   closeBtn?.addEventListener("click", closeCheckout);

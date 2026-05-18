@@ -242,7 +242,7 @@
       overflow: hidden;
       display: flex;
       flex-direction: column;
-      padding: 0 10px 8px;
+      padding: 0 10px 0;
     }
     #layer-donation-forms .donation-forms-title {
       position: static;
@@ -259,19 +259,13 @@
       min-height: 0;
       width: 100%;
     }
-    #layer-donation-forms .donation-forms-footer {
-      flex: 0 0 auto;
-      margin-top: 4px;
-      padding-top: 8px;
-      border-top: 1px solid #808080;
-      pointer-events: auto;
-    }
-    #donation-forms-cta {
+    #layer-donation-forms .donation-forms-panel-cta {
       display: block;
       width: 100%;
-      margin: 0;
+      margin: 8px 0 0;
       padding: 10px 12px;
       border: none;
+      border-top: 1px solid rgba(0, 0, 0, 0.35);
       background: #000000;
       color: #ffffff;
       font-family: inherit;
@@ -281,8 +275,9 @@
       text-align: center;
       cursor: pointer;
       box-sizing: border-box;
+      flex-shrink: 0;
     }
-    #donation-forms-cta:hover {
+    #layer-donation-forms .donation-forms-panel-cta:hover {
       background: #2b2b2b;
     }
     #layer-donation-forms .donation-forms-panel {
@@ -475,16 +470,6 @@
       text-transform: none;
       text-align: center;
     }
-    #layer-donation-forms .donation-forms-payment {
-      margin: 6px 0 0;
-      text-align: center;
-      font-weight: 500;
-      line-height: 1.2;
-    }
-    #layer-donation-forms .donation-forms-payment .payment-paypal {
-      font-style: italic;
-    }
-
     #donation-checkout-overlay {
       position: fixed;
       inset: 0;
@@ -789,7 +774,7 @@
     <a href="#section-finance" data-mobile-nav="2">Die Finanzierung</a>
     <a href="#section-circle" data-mobile-nav="3">Der Förderkreis</a>
   </nav>
-  <div id="build-tag">build 202605181230 <a href="./admin.html" title="Admin">admin</a></div>
+  <div id="build-tag">build 202605181300 <a href="./admin.html" title="Admin">admin</a></div>
   <div class="scene" id="scene">
     <div id="figma-frame">
       <div id="layer-left-bg" class="layer" style="left:0;top:0;width:577px;height:833px;background:#fdfdfb;"></div>
@@ -966,9 +951,7 @@
                 <span class="donation-forms-euro" style="font-size:21px;color:#a6a6a6;">€</span>
               </div>
             </div>
-            <p class="donation-forms-payment" style="font-size:16px;color:#ffffff;">
-              <span class="payment-paypal">PayPal</span> / Überweisung
-            </p>
+            <button type="button" class="donation-forms-panel-cta" data-panel-cta="jetzt">SPENDEN!</button>
           </div>
         </div>
         <div class="donation-forms-panel donation-forms-monatlich" data-panel="monatlich">
@@ -1002,11 +985,9 @@
                 <span class="donation-forms-monat-label" style="font-size:21px;color:#a6a6a6;">MONAT</span>
               </div>
             </div>
+            <button type="button" class="donation-forms-panel-cta" data-panel-cta="monatlich">SPENDEN!</button>
           </div>
         </div>
-        </div>
-        <div class="donation-forms-footer">
-          <button type="button" id="donation-forms-cta">SPENDEN!</button>
         </div>
       </div>
 
@@ -1053,9 +1034,9 @@
     </div>
   </div>
 
-  <script src="./js/site-client.js?v=202605181230"></script>
-  <script src="./js/donation-forms.js?v=202605181230"></script>
-  <script src="./js/donation-checkout.js?v=202605181230"></script>
-  <script src="./js/scroll-transition.js?v=202605181230"></script>
+  <script src="./js/site-client.js?v=202605181300"></script>
+  <script src="./js/donation-forms.js?v=202605181300"></script>
+  <script src="./js/donation-checkout.js?v=202605181300"></script>
+  <script src="./js/scroll-transition.js?v=202605181300"></script>
 </body>
 </html>

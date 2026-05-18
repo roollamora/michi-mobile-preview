@@ -101,6 +101,11 @@
     }
   }
 
+  root.querySelectorAll(".donation-forms-panel-cta").forEach((cta) => {
+    cta.addEventListener("click", (event) => event.stopPropagation());
+    cta.addEventListener("mousedown", (event) => event.stopPropagation());
+  });
+
   root.querySelectorAll("input, .donation-forms-betrag-wrap").forEach((el) => {
     el.addEventListener("click", (event) => event.stopPropagation());
     el.addEventListener("mousedown", (event) => event.stopPropagation());
@@ -120,7 +125,7 @@
     panel.addEventListener("click", (event) => {
       if (
         event.target.closest(
-          ".donation-forms-field, .donation-forms-betrag-wrap, input, label"
+          ".donation-forms-field, .donation-forms-betrag-wrap, .donation-forms-panel-cta, input, label"
         )
       ) {
         return;
