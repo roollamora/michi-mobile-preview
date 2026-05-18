@@ -4,6 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Michi Admin</title>
+  <link rel="stylesheet" href="./css/german-hyphenation.css" />
   <style>
     :root {
       --bg: #f4f4f4;
@@ -170,7 +171,7 @@
       </div>
     </div>
 
-    <div id="deployBanner" class="hidden"></div>
+    <div id="deployBanner" class="hidden"></motionless>
     <div id="status" class="status"></div>
 
     <section id="loginCard" class="card">
@@ -275,6 +276,265 @@
     </section>
   </main>
 
-  <script src="./js/admin-app.js?v=202605171900"></script>
+  <script>
+    const TOKEN_KEY = "michiAdminToken";
+    const statusEl = document.getElementById("status");
+    const loginCard = document.getElementById("loginCard");
+    const adminPanel = document.getElementById("adminPanel");
+    const logoutBtn = document.getElementById("logoutBtn");
+
+    function token() {
+      return localStorage.getItem(TOKEN_KEY);
+    }
+
+    function authHeaders(json = true) {
+      const headers = { Authorization: "Bearer " + token() };
+      if (json) headers["Content-Type"] = "application/json";
+      return headers;
+    }
+
+    function showStatus(message, ok = true) {
+      statusEl.textContent = message;
+      statusEl.className = "status " + (ok ? "ok" : "err");
+    }
+
+    function setLoggedIn(loggedIn) {
+      loginCard.classList.toggle("hidden", loggedIn);
+      adminPanel.classList.toggle("hidden", !loggedIn);
+      logoutBtn.classList.toggle("hidden", !loggedIn);
+    }
+
+    async function api(path, options = {}) {
+      const response = await fetch(path, options);
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok) {
+        throw new Error(data.error || "Request failed");
+      }
+      return data;
+    }
+
+    async function loadAdminData() {
+      const data = await api("/api/site", { headers: authHeaders(false) });
+      document.getElementById("target").value = data.donations.target;
+      document.getElementById("collected").value = data.donations.collected;
+      document.getElementById("pending").value = data.donations.pending;
+      document.getElementById("milestonesJson").value = JSON.stringify(
+        data.donations.milestones || [],
+        null,
+        2
+      );
+      document.getElementById("siteName").value = data.settings.siteName || "";
+      document.getElementById("goalDisplay").value = data.settings.goalDisplay || "";
+      document.getElementById("ctaText").value = data.settings.ctaText || "";
+      document.getElementById("readMoreText").value = data.settings.readMoreText || "";
+      document.getElementById("statusUpdatesJson").value = JSON.stringify(
+        data.statusUpdates || [],
+        null,
+        2
+      );
+      document.getElementById("heroTitleHtml").value = data.content?.heroTitleHtml || "";
+      document.getElementById("greetingHtml").value = data.content?.greetingHtml || "";
+      document.getElementById("introHtml").value = data.content?.introHtml || "";
+      document.getElementById("articleHtml").value = data.content?.articleHtml || "";
+      renderNewsletter(data.newsletter || []);
+    }
+
+    function renderNewsletter(list) {
+      const body = document.getElementById("newsletterBody");
+      body.innerHTML = "";
+      list.forEach((entry) => {
+        const row = document.createElement("tr");
+        row.innerHTML = `
+          <td><input data-field="email" data-id="${entry.id}" value="${entry.email}" /></td>
+          <td><input data-field="name" data-id="${entry.id}" value="${entry.name || ""}" /></td>
+          <td>
+            <select data-field="status" data-id="${entry.id}">
+              <option value="active" ${entry.status === "active" ? "selected" : ""}>active</option>
+              <option value="pending" ${entry.status === "pending" ? "selected" : ""}>pending</option>
+              <option value="unsubscribed" ${entry.status === "unsubscribed" ? "selected" : ""}>unsubscribed</option>
+            </select>
+          </td>
+          <td class="row-actions">
+            <button type="button" data-action="save" data-id="${entry.id}">Save</button>
+            <button type="button" class="danger" data-action="delete" data-id="${entry.id}">Delete</button>
+          </td>
+        `;
+        body.appendChild(row);
+      });
+    }
+
+    document.getElementById("loginBtn").addEventListener("click", async () => {
+      try {
+        const password = document.getElementById("password").value;
+        const result = await api("/api/login", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ password }),
+        });
+        localStorage.setItem(TOKEN_KEY, result.token);
+        setLoggedIn(true);
+        await loadAdminData();
+        showStatus("Signed in.");
+      } catch (error) {
+        showStatus(error.message, false);
+      }
+    });
+
+    logoutBtn.addEventListener("click", async () => {
+      try {
+        await api("/api/logout", { method: "POST", headers: authHeaders(false) });
+      } catch (_) {}
+      localStorage.removeItem(TOKEN_KEY);
+      setLoggedIn(false);
+      showStatus("Signed out.");
+    });
+
+    document.getElementById("saveDonationsBtn").addEventListener("click", async () => {
+      try {
+        const milestones = JSON.parse(document.getElementById("milestonesJson").value || "[]");
+        if (!Array.isArray(milestones)) throw new Error("Milestones must be an array.");
+        await api("/api/site", {
+          method: "POST",
+          headers: authHeaders(),
+          body: JSON.stringify({
+            donations: {
+              target: Number(document.getElementById("target").value),
+              collected: Number(document.getElementById("collected").value),
+              pending: Number(document.getElementById("pending").value),
+              milestones,
+            },
+          }),
+        });
+        showStatus("Donations saved.");
+      } catch (error) {
+        showStatus(error.message, false);
+      }
+    });
+
+    document.getElementById("saveSettingsBtn").addEventListener("click", async () => {
+      try {
+        const payload = {
+          siteName: document.getElementById("siteName").value,
+          goalDisplay: document.getElementById("goalDisplay").value,
+          ctaText: document.getElementById("ctaText").value,
+          readMoreText: document.getElementById("readMoreText").value,
+        };
+        const newPassword = document.getElementById("adminPassword").value;
+        if (newPassword) payload.adminPassword = newPassword;
+        await api("/api/site", {
+          method: "POST",
+          headers: authHeaders(),
+          body: JSON.stringify({ settings: payload }),
+        });
+        document.getElementById("adminPassword").value = "";
+        showStatus("Settings saved.");
+      } catch (error) {
+        showStatus(error.message, false);
+      }
+    });
+
+    document.getElementById("saveStatusUpdatesBtn").addEventListener("click", async () => {
+      try {
+        const statusUpdates = JSON.parse(
+          document.getElementById("statusUpdatesJson").value || "[]"
+        );
+        if (!Array.isArray(statusUpdates)) throw new Error("Status updates must be an array.");
+        await api("/api/site", {
+          method: "POST",
+          headers: authHeaders(),
+          body: JSON.stringify({ statusUpdates }),
+        });
+        showStatus("Status updates saved.");
+      } catch (error) {
+        showStatus(error.message, false);
+      }
+    });
+
+    document.getElementById("saveContentBtn").addEventListener("click", async () => {
+      try {
+        await api("/api/site", {
+          method: "POST",
+          headers: authHeaders(),
+          body: JSON.stringify({
+            content: {
+              heroTitleHtml: document.getElementById("heroTitleHtml").value,
+              greetingHtml: document.getElementById("greetingHtml").value,
+              introHtml: document.getElementById("introHtml").value,
+              articleHtml: document.getElementById("articleHtml").value,
+            },
+          }),
+        });
+        showStatus("Homepage content saved.");
+      } catch (error) {
+        showStatus(error.message, false);
+      }
+    });
+
+    document.getElementById("addSubscriberBtn").addEventListener("click", async () => {
+      try {
+        await api("/api/newsletter", {
+          method: "POST",
+          headers: authHeaders(),
+          body: JSON.stringify({
+            email: document.getElementById("newEmail").value,
+            name: document.getElementById("newName").value,
+            status: document.getElementById("newStatus").value,
+          }),
+        });
+        document.getElementById("newEmail").value = "";
+        document.getElementById("newName").value = "";
+        await loadAdminData();
+        showStatus("Subscriber added.");
+      } catch (error) {
+        showStatus(error.message, false);
+      }
+    });
+
+    document.getElementById("newsletterBody").addEventListener("click", async (event) => {
+      const button = event.target.closest("button");
+      if (!button) return;
+      const id = button.dataset.id;
+      const action = button.dataset.action;
+      const row = button.closest("tr");
+      try {
+        if (action === "delete") {
+          await api("/api/newsletter/" + id, {
+            method: "DELETE",
+            headers: authHeaders(false),
+          });
+          await loadAdminData();
+          showStatus("Subscriber removed.");
+          return;
+        }
+        if (action === "save") {
+          const email = row.querySelector('[data-field="email"]').value;
+          const name = row.querySelector('[data-field="name"]').value;
+          const status = row.querySelector('[data-field="status"]').value;
+          await api("/api/newsletter/" + id, {
+            method: "PUT",
+            headers: authHeaders(),
+            body: JSON.stringify({ email, name, status }),
+          });
+          showStatus("Subscriber updated.");
+        }
+      } catch (error) {
+        showStatus(error.message, false);
+      }
+    });
+
+    (async function init() {
+      if (!token()) {
+        setLoggedIn(false);
+        return;
+      }
+      try {
+        setLoggedIn(true);
+        await loadAdminData();
+      } catch (_) {
+        localStorage.removeItem(TOKEN_KEY);
+        setLoggedIn(false);
+      }
+    })();
+  </script>
 </body>
 </html>

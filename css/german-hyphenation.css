@@ -1,0 +1,39 @@
+/* German syllable hyphenation (Silbentrennung) — requires lang="de" on html */
+
+:lang(de) {
+  hyphens: auto;
+  -webkit-hyphens: auto;
+  -ms-hyphens: auto;
+  hyphenate-limit-chars: 6 4 4;
+}
+
+:lang(de) input,
+:lang(de) textarea,
+:lang(de) button,
+:lang(de) select,
+:lang(de) label,
+:lang(de) .hero-title,
+:lang(de) .hero-title span,
+:lang(de) #layer-nav,
+:lang(de) #layer-nav a,
+:lang(de) #build-tag,
+:lang(de) #build-tag a,
+:lang(de) .donation-forms-badge,
+:lang(de) .donation-forms-panel-cta,
+:lang(de) .donation-forms-field label,
+:lang(de) .donation-forms-euro,
+:lang(de) .donation-forms-multiply,
+:lang(de) .donation-forms-monat-label,
+:lang(de) #donationAmount,
+:lang(de) #goalAmount,
+:lang(de) .progress-marker-amount,
+:lang(de) .donation-checkout-close,
+:lang(de) #donation-checkout-submit,
+:lang(de) #donation-checkout-paypal,
+:lang(de) .donation-info-table,
+:lang(de) .donation-info-table th,
+:lang(de) .donation-info-table td {
+  hyphens: manual;
+  -webkit-hyphens: manual;
+  -ms-hyphens: manual;
+}
