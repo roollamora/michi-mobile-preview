@@ -172,7 +172,7 @@
     }
     #layer-donation-info .donation-info-fin-row {
       display: grid;
-      grid-template-columns: 1fr 1fr;
+      grid-template-columns: 40fr 60fr;
       gap: 12px 18px;
     }
     #layer-donation-info .donation-info-fin-col {
@@ -189,7 +189,7 @@
     }
     #layer-donation-info .donation-info-bottom-row {
       display: grid;
-      grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+      grid-template-columns: 60fr 40fr;
       gap: 14px 18px;
       align-items: start;
       flex-shrink: 0;
@@ -220,7 +220,6 @@
     #layer-donation-info .donation-info-table td:last-child,
     #layer-donation-info .donation-info-table th:last-child {
       text-align: right;
-      width: 42%;
     }
     body.mobile-layout #layer-donation-info {
       display: none !important;
@@ -241,17 +240,50 @@
       pointer-events: none;
       box-sizing: border-box;
       overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      padding: 0 10px 8px;
     }
     #layer-donation-forms .donation-forms-title {
-      position: absolute;
-      left: 0;
-      top: 0;
+      position: static;
+      flex: 0 0 auto;
       width: 100%;
       max-width: 100%;
-      height: 26px;
-      margin: 0;
+      margin: 0 0 6px;
       font-weight: 700;
-      line-height: 1.2;
+      line-height: 1.25;
+    }
+    #layer-donation-forms .donation-forms-panels {
+      position: relative;
+      flex: 1 1 auto;
+      min-height: 0;
+      width: 100%;
+    }
+    #layer-donation-forms .donation-forms-footer {
+      flex: 0 0 auto;
+      margin-top: 4px;
+      padding-top: 8px;
+      border-top: 1px solid #808080;
+      pointer-events: auto;
+    }
+    #donation-forms-cta {
+      display: block;
+      width: 100%;
+      margin: 0;
+      padding: 10px 12px;
+      border: none;
+      background: #000000;
+      color: #ffffff;
+      font-family: inherit;
+      font-weight: 700;
+      font-size: 16px;
+      line-height: 1.1;
+      text-align: center;
+      cursor: pointer;
+      box-sizing: border-box;
+    }
+    #donation-forms-cta:hover {
+      background: #2b2b2b;
     }
     #layer-donation-forms .donation-forms-panel {
       position: absolute;
@@ -289,8 +321,9 @@
       min-height: 0;
     }
     #layer-donation-forms[data-active="jetzt"] .donation-forms-jetzt {
-      top: 30px;
-      height: 188px;
+      top: 0;
+      bottom: 34px;
+      height: auto;
       padding: 10px 12px 8px;
     }
     #layer-donation-forms[data-active="jetzt"] .donation-forms-jetzt .donation-forms-body {
@@ -300,22 +333,24 @@
       margin: 0 0 8px;
     }
     #layer-donation-forms[data-active="jetzt"] .donation-forms-monatlich {
-      top: 222px;
+      top: auto;
+      bottom: 0;
       height: 28px;
       padding: 5px 12px;
       display: flex;
       align-items: center;
     }
     #layer-donation-forms[data-active="monatlich"] .donation-forms-jetzt {
-      top: 30px;
+      top: 0;
       height: 28px;
       padding: 5px 12px;
       display: flex;
       align-items: center;
     }
     #layer-donation-forms[data-active="monatlich"] .donation-forms-monatlich {
-      top: 62px;
-      height: 188px;
+      top: 34px;
+      bottom: 0;
+      height: auto;
       padding: 10px 12px 8px;
     }
     #layer-donation-forms[data-active="monatlich"] .donation-forms-monatlich .donation-forms-body {
@@ -448,6 +483,131 @@
     }
     #layer-donation-forms .donation-forms-payment .payment-paypal {
       font-style: italic;
+    }
+
+    #donation-checkout-overlay {
+      position: fixed;
+      inset: 0;
+      z-index: 20000;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: rgba(0, 0, 0, 0.55);
+      padding: 24px;
+      box-sizing: border-box;
+    }
+    #donation-checkout-overlay[hidden] {
+      display: none !important;
+    }
+    body.checkout-open {
+      overflow: hidden;
+    }
+    .donation-checkout-frame {
+      padding: 40px;
+      box-sizing: border-box;
+      animation: donation-checkout-pulse 2.2s ease-in-out infinite;
+    }
+    @keyframes donation-checkout-pulse {
+      0%, 100% { background: rgba(255, 255, 255, 1); }
+      50% { background: rgba(255, 255, 255, 0.8); }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      .donation-checkout-frame {
+        animation: none;
+        background: rgba(255, 255, 255, 1);
+      }
+    }
+    .donation-checkout-modal {
+      position: relative;
+      width: min(920px, calc(100vw - 160px));
+      max-height: min(560px, calc(100vh - 160px));
+      background: #000000;
+      color: #fdfdfb;
+      padding: 28px 32px 24px;
+      box-sizing: border-box;
+      overflow: auto;
+    }
+    .donation-checkout-close {
+      position: absolute;
+      top: 10px;
+      right: 12px;
+      border: none;
+      background: transparent;
+      color: #fdfdfb;
+      font-size: 28px;
+      line-height: 1;
+      cursor: pointer;
+      padding: 4px 8px;
+    }
+    .donation-checkout-grid {
+      display: grid;
+      grid-template-columns: 60fr 40fr;
+      gap: 28px;
+      min-height: 260px;
+    }
+    .donation-checkout-left {
+      font-size: 15px;
+      line-height: 1.45;
+      font-weight: 500;
+    }
+    .donation-checkout-left p {
+      margin: 0 0 12px;
+    }
+    .donation-checkout-right {
+      display: flex;
+      flex-direction: column;
+      min-height: 100%;
+    }
+    .donation-checkout-right-inner {
+      display: flex;
+      flex-direction: column;
+      flex: 1 1 auto;
+      min-height: 260px;
+    }
+    .donation-checkout-pledge {
+      margin: 0;
+      font-size: 13px;
+      line-height: 1.4;
+      font-weight: 500;
+    }
+    .donation-checkout-actions {
+      margin-top: auto;
+      display: flex;
+      flex-direction: column;
+      align-items: flex-end;
+      gap: 12px;
+      padding-top: 16px;
+    }
+    #donation-checkout-paypal {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 8px 14px;
+      border: none;
+      background: #fdfdfb;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+    #donation-checkout-paypal[hidden] {
+      display: none !important;
+    }
+    #donation-checkout-paypal img {
+      display: block;
+      height: 22px;
+      width: auto;
+    }
+    #donation-checkout-submit {
+      padding: 10px 22px;
+      border: none;
+      background: #808080;
+      color: #ffffff;
+      font-family: inherit;
+      font-weight: 700;
+      font-size: 15px;
+      cursor: pointer;
+    }
+    #donation-checkout-submit:hover {
+      background: #6a6a6a;
     }
     #progress-group { position: absolute; inset: 0; z-index: 30; pointer-events: none; }
     #progress-group > * { pointer-events: auto; position: absolute; }
@@ -629,7 +789,7 @@
     <a href="#section-finance" data-mobile-nav="2">Die Finanzierung</a>
     <a href="#section-circle" data-mobile-nav="3">Der Förderkreis</a>
   </nav>
-  <div id="build-tag">build 202605172700 <a href="./admin.html" title="Admin">admin</a></div>
+  <div id="build-tag">build 202605181230 <a href="./admin.html" title="Admin">admin</a></div>
   <div class="scene" id="scene">
     <div id="figma-frame">
       <div id="layer-left-bg" class="layer" style="left:0;top:0;width:577px;height:833px;background:#fdfdfb;"></div>
@@ -777,8 +937,9 @@
         </div>
       </div>
 
-      <div id="layer-donation-forms" class="layer" data-active="jetzt" style="left:64px;top:367px;width:562px;height:278px;" aria-label="Spendenformular">
+      <div id="layer-donation-forms" class="layer" data-active="jetzt" style="left:64px;top:367px;width:562px;height:340px;" aria-label="Spendenformular">
         <p class="donation-forms-title" style="font-size:17px;color:#000000;">Ihr könnt mich auf folgende Weise unterstützen:</p>
+        <div class="donation-forms-panels">
         <div class="donation-forms-panel donation-forms-jetzt" data-panel="jetzt">
           <button type="button" class="donation-forms-tab" aria-expanded="true" aria-controls="donation-forms-body-jetzt">
             <span class="donation-forms-badge" style="font-size:18px;color:#ffffff;">• JETZT</span>
@@ -828,7 +989,7 @@
                 <label for="donation-monatlich-email" style="font-size:14px;color:#a6a6a6;">E-MAIL</label>
                 <input id="donation-monatlich-email" type="email" name="email" autocomplete="email" placeholder=" " />
               </div>
-                            <div class="donation-forms-betrag-wrap donation-forms-betrag-wrap--monatlich">
+              <div class="donation-forms-betrag-wrap donation-forms-betrag-wrap--monatlich">
                 <div class="donation-forms-field donation-forms-field--betrag">
                   <label for="donation-monatlich-betrag" style="font-size:21px;color:#a6a6a6;">BETRAG</label>
                   <input id="donation-monatlich-betrag" type="text" name="betrag" inputmode="decimal" autocomplete="off" placeholder=" " style="font-size:21px;color:#000000;" />
@@ -842,6 +1003,10 @@
               </div>
             </div>
           </div>
+        </div>
+        </div>
+        <div class="donation-forms-footer">
+          <button type="button" id="donation-forms-cta">SPENDEN!</button>
         </div>
       </div>
 
@@ -861,8 +1026,36 @@
     </div>
   </div>
 
-  <script src="./js/site-client.js?v=202605171900"></script>
-  <script src="./js/donation-forms.js?v=202605172700"></script>
-  <script src="./js/scroll-transition.js?v=202605172200"></script>
+  <div id="donation-checkout-overlay" hidden aria-hidden="true">
+    <div class="donation-checkout-frame">
+      <div class="donation-checkout-modal" role="dialog" aria-modal="true" aria-labelledby="donation-checkout-title">
+        <button type="button" class="donation-checkout-close" aria-label="Schließen">×</button>
+        <div class="donation-checkout-grid">
+          <div class="donation-checkout-left" id="donation-checkout-summary">
+            <p id="donation-checkout-title" style="font-size:17px;color:#ffffff;font-weight:700;">Vielen Dank für Ihre Unterstützung</p>
+            <p style="font-size:14px;color:#d9d9d9;">Bitte prüfen Sie Ihre Angaben vor dem Absenden.</p>
+          </div>
+          <div class="donation-checkout-right">
+            <div class="donation-checkout-right-inner">
+              <p class="donation-checkout-pledge" style="font-size:13px;color:#d9d9d9;">
+                Mit dem Absenden bestätige ich, dass meine Angaben korrekt sind und ich Michael Thomsen wie angegeben unterstützen möchte.
+              </p>
+              <div class="donation-checkout-actions">
+                <button type="button" id="donation-checkout-paypal" hidden>
+                  <img src="./Layer%201.png" alt="Mit PayPal spenden" width="120" height="33" />
+                </button>
+                <button type="button" id="donation-checkout-submit">ABSENDEN</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="./js/site-client.js?v=202605181230"></script>
+  <script src="./js/donation-forms.js?v=202605181230"></script>
+  <script src="./js/donation-checkout.js?v=202605181230"></script>
+  <script src="./js/scroll-transition.js?v=202605181230"></script>
 </body>
 </html>
