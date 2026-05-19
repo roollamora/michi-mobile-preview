@@ -30,7 +30,10 @@
 :lang(de) .donation-checkout-close,
 :lang(de) #donation-checkout-submit,
 :lang(de) #donation-checkout-paypal,
-:lang(de) .donation-info-table td {
+:lang(de) .donation-checkout-bank,
+:lang(de) .donation-info-table td,
+:lang(de) .legal-nav,
+:lang(de) .legal-site-title {
   hyphens: manual;
   -webkit-hyphens: manual;
   -ms-hyphens: manual;

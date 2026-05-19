@@ -6,6 +6,17 @@
     local("Futura Medium"),
     url("../fonts/futura-medium.ttf") format("truetype");
   font-weight: 500;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Futura";
+  src:
+    local("Futura Bold"),
+    url("../fonts/futura-bold.ttf") format("truetype");
+  font-weight: 700;
+  font-style: normal;
   font-display: swap;
 }
 
@@ -28,9 +39,39 @@ a {
   color: #333;
 }
 
+.legal-site-header {
+  margin-bottom: 20px;
+  padding-bottom: 14px;
+  border-bottom: 1px solid #d8d8d8;
+}
+
+.legal-site-title {
+  color: #111;
+  font-size: 1rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  text-decoration: none;
+}
+
+.legal-site-title:hover {
+  color: #333;
+}
+
 .back {
   font-size: 13px;
-  margin-bottom: 24px;
+  margin: 0 0 20px;
+}
+
+.back a {
+  text-decoration: none;
+}
+
+.back a:hover {
+  text-decoration: underline;
+}
+
+main {
+  margin-bottom: 32px;
 }
 
 h1 {
@@ -56,4 +97,28 @@ ul {
 
 li {
   margin-bottom: 6px;
+}
+
+.legal-nav {
+  margin-top: 40px;
+  padding-top: 20px;
+  border-top: 1px solid #d8d8d8;
+  font-size: 13px;
+  line-height: 1.45;
+  color: #606060;
+}
+
+.legal-nav a {
+  color: #606060;
+  text-decoration: underline;
+}
+
+.legal-nav a:hover {
+  color: #111;
+}
+
+.legal-nav a[aria-current="page"] {
+  color: #111;
+  font-weight: 700;
+  text-decoration: none;
 }
