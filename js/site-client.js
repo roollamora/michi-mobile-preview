@@ -129,12 +129,8 @@
   }
 
   function applySettings(settings) {
-    const cta = document.getElementById("ctaText");
     const readMore = document.getElementById("readMoreText");
     const goalEl = document.getElementById("goalAmount");
-    if (cta && settings.ctaText) {
-      cta.innerHTML = settings.ctaText + "<br/>";
-    }
     if (readMore && settings.readMoreText) {
       readMore.textContent = settings.readMoreText;
     }

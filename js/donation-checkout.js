@@ -2,12 +2,12 @@
   const overlay = document.getElementById("donation-checkout-overlay");
   const formsRoot = document.getElementById("layer-donation-forms");
   const ctas = document.querySelectorAll(".donation-forms-panel-cta");
-  const summaryEl = document.getElementById("donation-checkout-summary");
+  const detailsEl = document.getElementById("donation-checkout-details");
   const paypalBtn = document.getElementById("donation-checkout-paypal");
   const submitBtn = document.getElementById("donation-checkout-submit");
   const closeBtn = document.querySelector(".donation-checkout-close");
 
-  if (!overlay || !formsRoot || !ctas.length || !summaryEl) return;
+  if (!overlay || !formsRoot || !ctas.length || !detailsEl) return;
 
   function getActiveMode() {
     return formsRoot.dataset.active === "monatlich" ? "monatlich" : "jetzt";
@@ -48,7 +48,6 @@
         : `${escapeHtml(data.betrag || "—")} €`;
 
     return `
-      <p style="font-size:17px;color:#ffffff;font-weight:700;">Vielen Dank für Ihre Unterstützung</p>
       <p style="font-size:14px;color:#d9d9d9;margin-bottom:14px;">${escapeHtml(modeLabel)}</p>
       <p style="font-size:14px;color:#fdfdfb;"><strong style="color:#ffffff;">Name:</strong> ${escapeHtml(data.name || "—")} ${escapeHtml(data.nachname || "")}</p>
       <p style="font-size:14px;color:#fdfdfb;"><strong style="color:#ffffff;">E-Mail:</strong> ${escapeHtml(data.email || "—")}</p>
@@ -59,7 +58,7 @@
 
   function openCheckout() {
     const data = readForm();
-    summaryEl.innerHTML = buildSummaryHtml(data);
+    detailsEl.innerHTML = buildSummaryHtml(data);
     paypalBtn.hidden = data.mode !== "jetzt";
     overlay.hidden = false;
     overlay.setAttribute("aria-hidden", "false");

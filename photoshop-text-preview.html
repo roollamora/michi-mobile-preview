@@ -62,7 +62,10 @@
       overflow: hidden;
     }
     .layer { position: absolute; }
-    #layer-hero-black { transition: none; }
+    #layer-hero-black {
+      transition: none;
+      overflow: hidden;
+    }
 
     .hero-title, .hero-title span {
       font-family: "Futura Condensed", sans-serif;
@@ -72,29 +75,63 @@
     .hero-title { white-space: nowrap; }
     .hero-title span[data-weight="500"]:not(.title-colon) { font-style: italic; }
 
+    #layer-hero-black {
+      overflow: hidden;
+    }
     #layer-nav {
       color: #808080;
       font-size: clamp(22px, 2vw, 30px);
       font-weight: 700;
       line-height: 1.2;
       opacity: 0;
-      z-index: 14;
+      box-sizing: border-box;
+      padding: 0;
+      text-align: right;
+      overflow: hidden;
+      transform: scale(var(--nav-fit, 1));
+      transform-origin: 100% 0%;
     }
-    #layer-nav .nav-row { position: relative; margin-bottom: 33px; text-align: right; }
+    #layer-nav .nav-row {
+      position: relative;
+      margin-bottom: calc(33px * var(--nav-fit, 1));
+      text-align: right;
+      width: 100%;
+    }
     #layer-nav .nav-row:last-child { margin-bottom: 0; }
-    #layer-nav .nav-link { display: inline-block; text-decoration: none; position: relative; z-index: 1; }
+    #layer-nav .nav-link {
+      display: block;
+      width: 100%;
+      box-sizing: border-box;
+      text-decoration: none;
+      position: relative;
+      z-index: 1;
+      white-space: normal;
+      overflow-wrap: anywhere;
+      text-align: right;
+      transform: scale(0.95);
+      transform-origin: 100% center;
+      transition: transform 0.15s ease, color 0.15s ease;
+    }
+    #layer-nav .nav-link.is-active {
+      color: #000;
+      transform: scale(1);
+    }
+    body.side-nav-visible #layer-nav,
+    body.side-nav-visible #layer-cutout {
+      z-index: 2;
+    }
     #layer-cutout {
       position: absolute;
       background: #fdfdfb;
       opacity: 0;
       pointer-events: none;
       z-index: 0;
+      box-sizing: border-box;
     }
 
     #layer-article {
       opacity: 0;
       overflow: hidden;
-      z-index: 10;
       font-size: clamp(14px, 1.05vw, 17px);
       line-height: 1.38;
       color: #111;
@@ -116,25 +153,28 @@
     #layer-donation-border {
       background: #000;
       opacity: 0;
-      z-index: 20;
       pointer-events: none;
     }
     #layer-footer-bg {
       background: #fdfdfb;
       opacity: 0;
-      z-index: 21;
       overflow: hidden;
       pointer-events: none;
     }
     #layer-footer-bar {
       background: #000;
       opacity: 0;
-      z-index: 23;
       pointer-events: none;
+    }
+    body.donation-panel-open #layer-footer-bg,
+    body.donation-panel-open #layer-donation-border,
+    body.donation-panel-open #layer-donation-forms,
+    body.donation-panel-open #layer-donation-info {
+      opacity: 1;
+      pointer-events: auto;
     }
     #layer-donation-info {
       opacity: 0;
-      z-index: 26;
       pointer-events: none;
       overflow: hidden;
       box-sizing: border-box;
@@ -153,14 +193,26 @@
       flex-shrink: 0;
     }
     #layer-donation-info #layer-status {
+      position: static;
       margin: 0;
       padding: 0 2px;
-      max-height: 76px;
+      min-height: 144px;
+      max-height: 52%;
       overflow-y: auto;
       text-align: justify;
       font-weight: 500;
       line-height: 1.35;
-      flex-shrink: 0;
+      flex: 1 1 auto;
+      opacity: 1;
+      pointer-events: auto;
+    }
+    #layer-status.is-ribbon-status {
+      font-size: clamp(10px, 0.85vw, 12px);
+      color: #808080;
+      line-height: 1.35;
+      overflow-y: auto;
+      box-sizing: border-box;
+      z-index: 26;
     }
     #layer-donation-info #layer-status strong {
       font-weight: 500;
@@ -227,17 +279,94 @@
     }
     #layer-donate-compact {
       opacity: 0;
-      z-index: 24;
       text-align: center;
       font-size: clamp(22px, 1.9vw, 30px);
       font-weight: 700;
       line-height: 1.04;
+      cursor: pointer;
     }
+    #layer-donate-compact.is-landing-cta {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: clamp(28px, 3.4vw, 45px);
+      line-height: 1.05;
+    }
+    #layer-status.donation-open-target {
+      cursor: pointer;
+    }
+    .donate-cta {
+      --cta-morph: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      width: 100%;
+      line-height: 1.08;
+      gap: 0.02em;
+    }
+    .donate-cta .cta-line {
+      display: block;
+      white-space: nowrap;
+      text-align: center;
+      transition: opacity 0.12s linear;
+    }
+    .donate-cta .cta-jetzt {
+      opacity: calc(1 - var(--cta-morph));
+      max-height: calc((1 - var(--cta-morph)) * 1.25em);
+      overflow: hidden;
+    }
+    .donate-cta .cta-spenden {
+      opacity: 1;
+    }
+    .donate-cta .cta-hier {
+      opacity: var(--cta-morph);
+      max-height: calc(var(--cta-morph) * 1.25em);
+      overflow: hidden;
+    }
+    #layer-read-more {
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      gap: 0.45em;
+      color: #808080;
+      font-size: clamp(14px, 1.35vw, 18px);
+      font-weight: 500;
+      line-height: 1.35;
+      opacity: 0;
+      pointer-events: none;
+      cursor: pointer;
+    }
+    .read-more-arrow {
+      flex-shrink: 0;
+      width: 0;
+      height: 0;
+      margin-top: 0.15em;
+      border-left: 7px solid transparent;
+      border-right: 7px solid transparent;
+      border-top: 10px solid #808080;
+      animation: triangle-bob 2.2s ease-in-out infinite;
+    }
+    @keyframes triangle-bob {
+      0%,
+      100% {
+        transform: translateY(0);
+      }
+      50% {
+        transform: translateY(5px);
+      }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      .read-more-arrow,
+      .progress-marker-triangle {
+        animation: none;
+      }
+    }
+
 
   /* Donation forms — layout/sizes in CSS; typography only via inline HTML on text nodes */
     #layer-donation-forms {
       opacity: 0;
-      z-index: 25;
       pointer-events: none;
       box-sizing: border-box;
       overflow: hidden;
@@ -281,6 +410,11 @@
       cursor: pointer;
       box-sizing: border-box;
       flex-shrink: 0;
+      pointer-events: auto;
+    }
+    body.donation-panel-open #layer-donation-forms,
+    body.donation-panel-open #layer-donation-info {
+      pointer-events: auto;
     }
     #layer-donation-forms .donation-forms-panel-cta:hover {
       background: #2b2b2b;
@@ -589,7 +723,16 @@
     #donation-checkout-submit:hover {
       background: #6a6a6a;
     }
-    #progress-group { position: absolute; inset: 0; z-index: 30; pointer-events: none; }
+    .donation-checkout-details {
+      margin-top: 18px;
+      padding-top: 16px;
+      border-top: 1px solid rgba(255, 255, 255, 0.2);
+    }
+    .donation-checkout-details p {
+      margin: 0 0 10px;
+    }
+    #progress-group { position: absolute; inset: 0; pointer-events: none; }
+    #progress-group.donation-open-target > * { cursor: pointer; }
     #progress-group > * { pointer-events: auto; position: absolute; }
     #progressFrame {
       box-sizing: border-box;
@@ -633,13 +776,24 @@
       text-align: right;
     }
     .progress-marker-triangle {
-      transform: translateX(-50%);
       width: 0;
       height: 0;
       border-left: 7px solid transparent;
       border-right: 7px solid transparent;
       border-bottom: 9px solid #000;
       pointer-events: none;
+      transform: translateX(-50%);
+      transform-origin: 50% 0%;
+      animation: progress-marker-scale 2.2s ease-in-out infinite;
+    }
+    @keyframes progress-marker-scale {
+      0%,
+      100% {
+        transform: translateX(-50%) scale(1);
+      }
+      50% {
+        transform: translateX(-50%) scale(1.25);
+      }
     }
     .progress-marker-amount {
       transform: translateX(-50%);
@@ -674,19 +828,16 @@
       font-size: clamp(20px, 1.7vw, 30px);
       font-weight: 700;
       line-height: 1.18;
-      z-index: 16;
       white-space: nowrap;
     }
     #layer-intro {
       color: #fdfdfb;
       font-size: clamp(14px, 1.05vw, 17px);
       line-height: 1.4;
-      z-index: 16;
     }
     #layer-portrait {
       object-fit: cover;
       object-position: center top;
-      z-index: 11;
     }
     #mobile-menu-btn {
       position: fixed;
@@ -769,13 +920,21 @@
     <a href="#section-finance" data-mobile-nav="2">Die Finanzierung</a>
     <a href="#section-circle" data-mobile-nav="3">Der Förderkreis</a>
   </nav>
-  <div id="build-tag">build 202605181350 <a href="./admin.html" title="Admin">admin</a></div>
+  <div id="build-tag">build 202605190008 <a href="./admin.html" title="Admin">admin</a></div>
   <div class="scene" id="scene">
     <div id="figma-frame">
       <div id="layer-left-bg" class="layer" style="left:0;top:0;width:577px;height:833px;background:#fdfdfb;"></div>
       <div id="layer-divider" class="layer" style="left:577px;top:0;width:15px;height:832px;background:#000;"></div>
       <div id="layer-right-grey" class="layer" style="left:592px;top:0;width:688px;height:832px;background:#808080;"></div>
-      <div id="layer-hero-black" class="layer" style="left:74px;top:0;width:518px;height:398px;background:#000;"></div>
+      <div id="layer-hero-black" class="layer" style="left:74px;top:0;width:518px;height:398px;background:#000;">
+        <nav id="layer-nav" class="layer">
+          <div id="layer-cutout"></div>
+          <div class="nav-row"><a class="nav-link" href="#section-story" data-nav-index="0">Meine Geschichte</a></div>
+          <div class="nav-row"><a class="nav-link" href="#section-hertie" data-nav-index="1">Warum die Hertie School?</a></div>
+          <div class="nav-row"><a class="nav-link" href="#section-finance" data-nav-index="2">Die Finanzierung</a></div>
+          <div class="nav-row"><a class="nav-link" href="#section-circle" data-nav-index="3">Der Förderkreis</a></div>
+        </nav>
+      </div>
 
       <div id="hero-title" class="hero-title layer" style="left:-44.68px;top:133.25px;width:617.76px;">
         <span data-weight="800" style="color:#fdfdfb;font-size:30.24px;font-weight:800;line-height:37.26px;letter-spacing:0.91px;">Förderkreis</span><span data-weight="500" style="color:#fdfdfb;font-size:33.48px;font-weight:500;line-height:37.26px;letter-spacing:1px;"> </span><span data-weight="500" style="color:#fdfdfb;font-size:26.46px;font-weight:500;line-height:37.26px;letter-spacing:0.79px;">für </span><span data-weight="800" style="color:#fdfdfb;font-size:30.24px;font-weight:800;line-height:37.26px;letter-spacing:0.91px;">Michael Thomsen</span><span data-weight="500" class="title-colon" style="color:#fdfdfb;font-size:30.24px;font-weight:500;line-height:37.26px;letter-spacing:0.91px;">:<br></span><span data-weight="800" style="color:#fdfdfb;font-size:27px;font-weight:800;line-height:48.96px;">„</span><span data-weight="800" style="color:#fdfdfb;font-size:45px;font-weight:800;line-height:48.96px;">Master of Public Policy</span><span data-weight="800" style="color:#fdfdfb;font-size:27px;font-weight:800;line-height:48.96px;">“<br></span><span data-weight="500" style="color:#fdfdfb;font-size:26.46px;font-weight:500;line-height:40.86px;letter-spacing:3.7px;">an der</span><span data-weight="500" style="color:#fdfdfb;font-size:30.24px;font-weight:500;line-height:40.86px;letter-spacing:4.23px;"> </span><span data-weight="800" style="color:#fdfdfb;font-size:30.24px;font-weight:800;line-height:40.86px;letter-spacing:4.23px;">Hertie School</span><span data-weight="500" style="color:#fdfdfb;font-size:30.24px;font-weight:500;line-height:40.86px;letter-spacing:4.23px;"> </span><span data-weight="500" style="color:#fdfdfb;font-size:26.46px;font-weight:500;line-height:40.86px;letter-spacing:3.7px;">in </span><span data-weight="800" style="color:#fdfdfb;font-size:30.24px;font-weight:800;line-height:40.86px;letter-spacing:4.23px;">Berlin</span>
@@ -790,13 +949,6 @@
       </div>
       <img id="layer-portrait" class="layer" src="./Untitled-1.png" alt="Portrait" style="left:784px;top:398px;width:496px;height:437px;">
 
-      <nav id="layer-nav" class="layer" style="left:98px;top:309px;width:296px;height:283px;">
-        <div id="layer-cutout"></div>
-        <div class="nav-row"><a class="nav-link" href="#section-story" data-nav-index="0">Meine Geschichte</a></div>
-        <div class="nav-row"><a class="nav-link" href="#section-hertie" data-nav-index="1">Warum die Hertie School?</a></div>
-        <div class="nav-row"><a class="nav-link" href="#section-finance" data-nav-index="2">Die Finanzierung</a></div>
-        <div class="nav-row"><a class="nav-link" href="#section-circle" data-nav-index="3">Der Förderkreis</a></div>
-      </nav>
 
       <article id="layer-article" class="layer" style="left:437px;top:214px;width:634px;height:426px;">
         <div id="article-scroll-inner">
@@ -986,9 +1138,24 @@
         </div>
       </div>
 
-      <div id="layer-donate-compact" class="layer" style="left:74px;top:698px;width:148px;height:59px;"><span id="ctaText">SPENDEN</span><br>HIER!</div>
+      <div id="layer-read-more" class="layer">
+        <span id="readMoreText">...oder weiterlesen</span>
+        <span class="read-more-arrow" aria-hidden="true"></span>
+      </div>
 
-      <div id="progress-group">
+      <div
+        id="layer-donate-compact"
+        class="layer donation-open-target"
+        style="left:86px;top:591px;width:458px;height:65px;"
+      >
+        <div id="ctaText" class="donate-cta">
+          <span class="cta-line cta-jetzt">JETZT</span>
+          <span class="cta-line cta-spenden">SPENDEN</span>
+          <span class="cta-line cta-hier">HIER</span>
+        </div>
+      </div>
+
+      <div id="progress-group" class="donation-open-target">
         <div id="progressFrame" data-base-left="99" data-base-top="468" style="left:99px;top:468px;width:441px;height:47px;"></div>
         <div id="progressFill"></div>
         <div id="progressPending"></div>
@@ -1007,9 +1174,10 @@
       <div class="donation-checkout-modal" role="dialog" aria-modal="true" aria-labelledby="donation-checkout-title">
         <button type="button" class="donation-checkout-close" aria-label="Schließen">×</button>
         <div class="donation-checkout-grid">
-          <div class="donation-checkout-left" id="donation-checkout-summary">
+          <div class="donation-checkout-left" id="donation-checkout-summary" aria-labelledby="donation-checkout-title">
             <p id="donation-checkout-title" style="font-size:17px;color:#ffffff;font-weight:700;">Vielen Dank für Ihre Unterstützung</p>
             <p style="font-size:14px;color:#d9d9d9;">Bitte prüfen Sie Ihre Angaben vor dem Absenden.</p>
+            <div id="donation-checkout-details" class="donation-checkout-details"></div>
           </div>
           <div class="donation-checkout-right">
             <div class="donation-checkout-right-inner">
@@ -1029,9 +1197,9 @@
     </div>
   </div>
 
-  <script src="./js/site-client.js?v=202605181300"></script>
-  <script src="./js/donation-forms.js?v=202605181300"></script>
-  <script src="./js/donation-checkout.js?v=202605181300"></script>
-  <script src="./js/scroll-transition.js?v=202605181300"></script>
+  <script src="./js/site-client.js?v=202605182300"></script>
+  <script src="./js/donation-forms.js?v=202605182300"></script>
+  <script src="./js/donation-checkout.js?v=202605190004"></script>
+  <script src="./js/scroll-transition.js?v=202605190008"></script>
 </body>
 </html>

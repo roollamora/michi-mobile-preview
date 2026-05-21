@@ -24,12 +24,15 @@
     footerBg: document.getElementById("layer-footer-bg"),
     status: document.getElementById("layer-status"),
     donate: document.getElementById("layer-donate-compact"),
+    readMore: document.getElementById("layer-read-more"),
     donationForms: document.getElementById("layer-donation-forms"),
     donationInfo: document.getElementById("layer-donation-info"),
     progressFrame: document.getElementById("progressFrame"),
     progressMarker: document.getElementById("progressMarkerTriangle"),
     donationAmount: document.getElementById("donationAmount"),
   };
+
+  const progressGroup = document.getElementById("progress-group");
 
   const navLinks = [...nav.querySelectorAll(".nav-link")];
   const sections = navLinks
@@ -49,7 +52,7 @@
   const DONATION_RIGHT_X = DONATION_LEFT_X + DONATION_COL_W + DONATION_COL_GAP;
   const FOOTER_WHITE_Y = 307;
   const FOOTER_WHITE_H = 519;
-  const DONATION_FORMS_H = 340;
+  const DONATION_FORMS_H = 400;
   const DONATION_PROGRESS_H = 47;
   const DONATION_PROGRESS_GAP = 14;
   const DONATION_LEFT_MIN_H =
@@ -58,7 +61,7 @@
   const FOOTER_INNER_H = FOOTER_WHITE_H - DONATION_PANEL_INNER * 2;
   const DONATION_COLUMN_H = Math.min(
     FOOTER_INNER_H,
-    Math.max(DONATION_LEFT_MIN_H, 400)
+    Math.max(DONATION_LEFT_MIN_H, 520)
   );
   const DONATION_COL_TOP =
     FOOTER_INNER_TOP + (FOOTER_INNER_H - DONATION_COLUMN_H) / 2;
@@ -84,6 +87,54 @@
     innerH: 27,
     markerTopOffset: 49,
     amountTopOffset: 64,
+  };
+  /** Design-space progress bar anchors (1280×832). */
+  const PROGRESS_DESIGN = {
+    article: { x: 99, y: 468, w: 441, h: 47 },
+  };
+  /** Landing welcome (Figma 1280×832): progress + JETZT SPENDEN before footer ribbon. */
+  const LANDING_CHROME = {
+    cta: { x: 86, y: 591, w: 458, h: 65 },
+    readMore: { x: 281, y: 735, w: 241, h: 78 },
+  };
+  /** Collapsed footer ribbon: SPENDEN HIER | progress | status (Figma proportions). */
+  const FOOTER_RIBBON = {
+    donate: { x: 74, y: 698, w: 148, h: 72 },
+    progress: { x: 240, y: 692, w: 462, h: 47 },
+    status: { x: 720, y: 660, w: 350, h: 120 },
+  };
+  /** Side nav design box — progress must not sit over this when nav is visible. */
+  const SIDE_NAV_DESIGN = { top: 309, bottom: 592 };
+  /** Nav inside heroBlack: bottom-anchored; width spans hero minus left pad, flush to hero right edge. */
+  const NAV_IN_HERO = {
+    from: { bottom: 95, h: 283 },
+    to: { bottom: 67, h: 283 },
+  };
+  const NAV_LEFT_PAD = 10;
+  /** Desktop paint order (bottom → top). Single source of truth — do not set z-index in CSS. */
+  const Z = {
+    leftBg: 1,
+    divider: 2,
+    rightGrey: 3,
+    portrait: 4,
+    greeting: 5,
+    intro: 6,
+    article: 7,
+    heroBlack: 8,
+    heroTitle: 9,
+    readMore: 10,
+    landingDonate: 11,
+    navCutout: 1,
+    nav: 2,
+    donationBorder: 20,
+    footerBg: 21,
+    footerBar: 22,
+    donationInfo: 24,
+    donationForms: 25,
+    ribbonStatus: 26,
+    ribbonDonate: 27,
+    progress: 28,
+    progressPanel: 32,
   };
   const DEFAULT_LAYOUT = {
     elements: {
@@ -138,9 +189,10 @@
       },
       nav: {
         mode: "proportional",
-        anchor: "top-left",
-        from: { x: 98, y: 309, w: 296, h: 283 },
-        to: { x: 98, y: 309, w: 150, h: 283 },
+        anchor: "top-right",
+        anchorTarget: "heroBlack",
+        from: { x: NAV_LEFT_PAD, y: 0, w: 508, h: NAV_IN_HERO.from.h },
+        to: { x: NAV_LEFT_PAD, y: 0, w: 321, h: NAV_IN_HERO.to.h },
       },
       article: {
         mode: "proportional",
@@ -236,6 +288,67 @@
   const STATE_WELCOME = "welcome";
   const STATE_ARTICLE = "article";
   let pageState = STATE_WELCOME;
+
+  /** Expanded donation footer — only grows when user clicks progress/footer (not on scroll). */
+  let donationPanelT = 0;
+  let donationPanelAnim = null;
+  const DONATION_PANEL_MS = 480;
+
+  function easeOutCubic(t) {
+    return 1 - (1 - t) ** 3;
+  }
+
+  function isDonationPanelOpen() {
+    return donationPanelT > 0.04;
+  }
+
+  function scrollToDonationAnchor() {
+    const targetY = scene.offsetTop + transitionPx + articleScrollMax;
+    window.scrollTo({
+      top: targetY,
+      behavior: prefersReduced ? "auto" : "smooth",
+    });
+  }
+
+  function setDonationPanelOpen(open, { animate = true } = {}) {
+    const goal = open ? 1 : 0;
+    if (donationPanelAnim) {
+      cancelAnimationFrame(donationPanelAnim);
+      donationPanelAnim = null;
+    }
+    if (!animate || prefersReduced) {
+      donationPanelT = goal;
+      document.body.classList.toggle("donation-panel-open", goal > 0.5);
+      render();
+      return;
+    }
+    const start = donationPanelT;
+    const t0 = performance.now();
+    const step = (now) => {
+      const u = Math.min(1, (now - t0) / DONATION_PANEL_MS);
+      donationPanelT = start + (goal - start) * easeOutCubic(u);
+      document.body.classList.toggle("donation-panel-open", donationPanelT > 0.04);
+      render();
+      if (u < 1) {
+        donationPanelAnim = requestAnimationFrame(step);
+      } else {
+        donationPanelT = goal;
+        donationPanelAnim = null;
+        render();
+      }
+    };
+    donationPanelAnim = requestAnimationFrame(step);
+  }
+
+  function openDonationPanel() {
+    if (isMobileLayout()) return;
+    scrollToDonationAnchor();
+    setDonationPanelOpen(true);
+  }
+
+  function closeDonationPanel() {
+    setDonationPanelOpen(false);
+  }
 
   function getZoneEnd() {
     return isMobileLayout()
@@ -388,22 +501,92 @@
     }
   }
 
+  function applyNavInHero(p) {
+    const heroEl = layers.heroBlack;
+    if (!heroEl || !nav) return null;
+    const heroScene = resolveRect("heroBlack", p);
+    if (!heroScene) return null;
+
+    const from = NAV_IN_HERO.from;
+    const to = NAV_IN_HERO.to;
+    const bottomInset = lerp(from.bottom, to.bottom, p);
+    const designH = lerp(from.h, to.h, p);
+    const bottomPx = sy(bottomInset);
+    const leftPadPx = sx(NAV_LEFT_PAD);
+    const w = Math.max(1, heroScene.w - leftPadPx);
+    let h = sy(designH);
+    const maxH = Math.max(sy(100), heroScene.h - bottomPx - sy(8));
+    h = Math.min(h, maxH);
+    const relX = leftPadPx;
+    const relY = Math.max(sy(4), heroScene.h - h - bottomPx);
+    const fitScale = Math.min(1, h / Math.max(1, sy(designH)));
+
+    nav.style.setProperty("--nav-fit", String(fitScale));
+    if (nav.parentElement === heroEl) {
+      nav.style.left = `${relX}px`;
+      nav.style.right = "0";
+      nav.style.top = `${relY}px`;
+      nav.style.width = "auto";
+      nav.style.height = `${h}px`;
+      return { x: heroScene.x + relX, y: heroScene.y + relY, w, h };
+    }
+    setRectPx(nav, heroScene.x + relX, heroScene.y + relY, w, h);
+    return { x: heroScene.x + relX, y: heroScene.y + relY, w, h };
+  }
+
+  /** Active section, or any nav row that has scrolled up beside the hero title band. */
+  function resolveCutoutIndex(activeIndex) {
+    if (forcedIndex != null) return forcedIndex;
+
+    const heroTitleRect = layers.heroTitle?.getBoundingClientRect();
+    if (heroTitleRect) {
+      const titleTop = heroTitleRect.top - 2;
+      const titleBottom = heroTitleRect.bottom + 2;
+      let reachedIndex = -1;
+      navLinks.forEach((link, i) => {
+        const row = link.closest(".nav-row");
+        if (!row) return;
+        const rowRect = row.getBoundingClientRect();
+        if (rowRect.top < titleBottom && rowRect.bottom > titleTop) {
+          reachedIndex = i;
+        }
+      });
+      if (reachedIndex >= 0) return reachedIndex;
+    }
+    return activeIndex;
+  }
+
   function updateCutout(index) {
     const link = navLinks[index];
-    if (!link) return;
+    if (!link || !layers.heroBlack) {
+      cutout.style.opacity = "0";
+      return;
+    }
     const row = link.closest(".nav-row");
-    if (!row) return;
+    if (!row) {
+      cutout.style.opacity = "0";
+      return;
+    }
+
+    navLinks.forEach((navLink, i) => {
+      navLink.classList.toggle("is-active", i === index);
+    });
 
     const navRect = nav.getBoundingClientRect();
     const rowRect = row.getBoundingClientRect();
     const linkRect = link.getBoundingClientRect();
     const heroBlackRect = layers.heroBlack.getBoundingClientRect();
     const padY = 4;
+    const padLink = 4;
+    const minLeftPx = sx(NAV_LEFT_PAD);
 
-    const left = Math.max(0, linkRect.left - navRect.left - 10);
-    const top = Math.max(0, rowRect.top - navRect.top - padY);
-    const right = heroBlackRect.right - navRect.left;
+    const heroLeftInNav = heroBlackRect.left - navRect.left;
+    const minLeft = Math.max(0, heroLeftInNav + minLeftPx);
+    const linkLeft = linkRect.left - navRect.left - padLink;
+    const left = Math.max(minLeft, linkLeft);
+    const right = heroBlackRect.right - navRect.left + 1;
     const width = Math.max(1, right - left);
+    const top = Math.max(0, rowRect.top - navRect.top - padY);
     const height = Math.max(1, rowRect.height + padY * 2);
 
     cutout.style.left = `${left}px`;
@@ -411,6 +594,50 @@
     cutout.style.width = `${width}px`;
     cutout.style.height = `${height}px`;
     cutout.style.opacity = "1";
+  }
+
+  function scrollToArticleStart({ smooth = true } = {}) {
+    pageState = STATE_ARTICLE;
+    window.scrollTo({
+      top: scene.offsetTop + transitionPx,
+      behavior: smooth && !prefersReduced ? "smooth" : "auto",
+    });
+  }
+
+  function applyDesktopLayerStack(pDonation) {
+    const setZ = (el, z) => {
+      if (el) el.style.zIndex = String(z);
+    };
+    const panelOpen = pDonation > 0.04;
+
+    setZ(layers.leftBg, Z.leftBg);
+    setZ(layers.divider, Z.divider);
+    setZ(layers.rightGrey, Z.rightGrey);
+    setZ(layers.portrait, Z.portrait);
+    setZ(layers.greeting, Z.greeting);
+    setZ(layers.intro, Z.intro);
+    setZ(layers.article, Z.article);
+    setZ(layers.heroBlack, Z.heroBlack);
+    setZ(layers.heroTitle, Z.heroTitle);
+    setZ(cutout, Z.navCutout);
+    setZ(nav, Z.nav);
+    setZ(layers.readMore, Z.readMore);
+    setZ(layers.footerBg, Z.footerBg);
+    setZ(layers.donationBorder, Z.donationBorder);
+    setZ(layers.footerBar, Z.footerBar);
+    setZ(layers.donationInfo, Z.donationInfo);
+    setZ(layers.donationForms, Z.donationForms);
+    if (layers.donate) {
+      setZ(layers.donate, Z.landingDonate);
+    }
+    if (layers.status && layers.status.parentElement !== layers.donationInfo) {
+      setZ(layers.status, Z.ribbonStatus);
+    } else if (layers.status) {
+      layers.status.style.zIndex = "";
+    }
+    if (progressGroup) {
+      progressGroup.style.zIndex = String(panelOpen ? Z.progressPanel : Z.progress);
+    }
   }
 
   function activeSection(articleOffset, viewportPx) {
@@ -422,24 +649,208 @@
     return index;
   }
 
-  function shiftProgressLabels(p, progressRect) {
-    const frameLeft = progressRect
-      ? progressRect.x
-      : sx(lerp(99, DONATION_LEFT_X, p));
-    const frameTop = progressRect
-      ? progressRect.y
-      : sy(lerp(468, DONATION_PROGRESS_Y, p));
-    const frameWidth = progressRect ? progressRect.w : sx(441);
-    const frameRight = frameLeft + frameWidth;
+  function expandedProgressDesign() {
+    return {
+      x: DONATION_LEFT_X,
+      y: DONATION_PROGRESS_Y,
+      w: DONATION_COL_W,
+      h: DONATION_PROGRESS_H,
+    };
+  }
 
+  function progressRibbonBlend(pScroll) {
+    const { article } = PROGRESS_DESIGN;
+    const ribbon = FOOTER_RIBBON.progress;
+    const navVisible = fadeIn(pScroll, 0.62, 0.94);
+    let ribbonT = fadeIn(pScroll, 0.45, 0.72);
+    if (navVisible > 0.02 && ribbon.y > article.y) {
+      const clearY = SIDE_NAV_DESIGN.bottom + 10;
+      const neededT = clamp01((clearY - article.y) / (ribbon.y - article.y));
+      ribbonT = Math.max(ribbonT, neededT * navVisible);
+    }
+    return ribbonT;
+  }
+
+  function progressCollapsedRect(pScroll) {
+    const { article } = PROGRESS_DESIGN;
+    const ribbon = FOOTER_RIBBON.progress;
+    const ribbonT = progressRibbonBlend(pScroll);
+    return {
+      x: lerp(article.x, ribbon.x, ribbonT),
+      y: lerp(article.y, ribbon.y, ribbonT),
+      w: lerp(article.w, ribbon.w, ribbonT),
+      h: lerp(article.h, ribbon.h, ribbonT),
+    };
+  }
+
+  function designProgressRect(pScroll, pDonation) {
+    const collapsed = progressCollapsedRect(pScroll);
+    const expanded = expandedProgressDesign();
+    if (pDonation > 0.001) {
+      const t = easeOutCubic(clamp01(pDonation));
+      return {
+        x: lerp(collapsed.x, expanded.x, t),
+        y: lerp(collapsed.y, expanded.y, t),
+        w: lerp(collapsed.w, expanded.w, t),
+        h: lerp(collapsed.h, expanded.h, t),
+      };
+    }
+    return collapsed;
+  }
+
+  function ensureStatusInDonationInfo() {
+    const info = layers.donationInfo;
+    const status = layers.status;
+    if (!info || !status || status.parentElement === info) return;
+    const title = info.querySelector(".donation-info-report-title");
+    if (title) title.insertAdjacentElement("afterend", status);
+    else info.prepend(status);
+  }
+
+  function ensureStatusOnScene() {
+    const status = layers.status;
+    const frame = document.getElementById("figma-frame");
+    if (!status || !frame || status.parentElement === frame) return;
+    frame.appendChild(status);
+  }
+
+  function ctaScrollMorph(pScroll) {
+    return clamp01(remap(pScroll, 0.1, 0.58));
+  }
+
+  function resetStatusExpandedLayout() {
+    const status = layers.status;
+    if (!status) return;
+    status.style.position = "";
+    status.style.left = "";
+    status.style.top = "";
+    status.style.width = "";
+    status.style.height = "";
+    status.style.right = "";
+    status.style.bottom = "";
+  }
+
+  function applyFooterRibbonElements(pScroll, pDonation, atFooterZone) {
+    const ribbonBlend = fadeIn(pScroll, 0.58, 0.92);
+    const ribbonVisible = ribbonBlend * fadeOut(pDonation, 0.08, 0.42);
+    const ribbonStatusVisible = Math.max(ribbonVisible, atFooterZone) * fadeOut(pDonation, 0, 0.1);
+    const ctaMorph = ctaScrollMorph(pScroll);
+
+    if (layers.donate) {
+      if (pDonation > 0.08) {
+        setOpacity(layers.donate, 0);
+        layers.donate.style.pointerEvents = "none";
+        layers.donate.classList.remove("is-landing-cta");
+      } else {
+        const landingPx = designRectToPx(LANDING_CHROME.cta);
+        const footerPx = designRectToPx(FOOTER_RIBBON.donate);
+        const t = ctaMorph;
+        setRectPx(
+          layers.donate,
+          lerp(landingPx.x, footerPx.x, t),
+          lerp(landingPx.y, footerPx.y, t),
+          lerp(landingPx.w, footerPx.w, t),
+          lerp(landingPx.h, footerPx.h, t)
+        );
+        layers.donate.classList.toggle("is-landing-cta", t < 0.5);
+        layers.donate.style.setProperty("--cta-morph", String(t));
+        const ctaVisible = Math.max(fadeIn(pScroll, 0, 0.06), fadeOut(pDonation, 0, 0.1));
+        setOpacity(layers.donate, ctaVisible);
+        layers.donate.style.pointerEvents = ctaVisible > 0.2 ? "auto" : "none";
+      }
+    }
+
+    if (layers.status) {
+      const statusClickable = ribbonStatusVisible > 0.2 && pDonation < 0.08;
+      layers.status.classList.toggle("donation-open-target", statusClickable);
+      layers.status.classList.toggle("is-ribbon-status", ribbonStatusVisible > 0.12 && pDonation < 0.08);
+      if (pDonation > 0.04) {
+        ensureStatusInDonationInfo();
+        resetStatusExpandedLayout();
+        layers.status.classList.remove("is-ribbon-status");
+        setOpacity(layers.status, 1);
+        layers.status.style.pointerEvents = "auto";
+      } else if (ribbonStatusVisible > 0.02) {
+        ensureStatusOnScene();
+        const statusPx = designRectToPx(FOOTER_RIBBON.status);
+        layers.status.style.position = "absolute";
+        setRectPx(layers.status, statusPx.x, statusPx.y, statusPx.w, statusPx.h);
+        setOpacity(layers.status, Math.min(1, ribbonStatusVisible));
+        layers.status.style.pointerEvents = ribbonStatusVisible > 0.2 ? "auto" : "none";
+      } else {
+        ensureStatusOnScene();
+        layers.status.classList.remove("is-ribbon-status");
+        setOpacity(layers.status, 0);
+        layers.status.style.pointerEvents = "none";
+      }
+    }
+  }
+
+  function designRectToPx(rect) {
+    return {
+      x: sx(rect.x),
+      y: sy(rect.y),
+      w: sx(rect.w),
+      h: sy(rect.h),
+    };
+  }
+
+  function shiftProgressLabels(progressRect) {
+    if (!progressRect) return;
+    const frameRight = progressRect.x + progressRect.w;
     const goalEl = document.getElementById("goalAmount");
     if (goalEl) {
       goalEl.style.left = `${frameRight}px`;
-      goalEl.style.top = `${frameTop + sy(52)}px`;
+      goalEl.style.top = `${progressRect.y + progressRect.h * (PROGRESS_BASE.amountTopOffset / PROGRESS_BASE.frameH)}px`;
       goalEl.style.transform = "translateX(-100%)";
       goalEl.style.width = "auto";
       goalEl.style.textAlign = "right";
     }
+  }
+
+  function applyProgressChrome(progressRectPx) {
+    if (!progressRectPx || !layers.progressFrame) return;
+    setRectPx(
+      layers.progressFrame,
+      progressRectPx.x,
+      progressRectPx.y,
+      progressRectPx.w,
+      progressRectPx.h
+    );
+    shiftProgressLabels(progressRectPx);
+
+    const frameLeft = progressRectPx.x;
+    const frameTop = progressRectPx.y;
+    const frameWidth = progressRectPx.w;
+    const frameHeight = progressRectPx.h;
+    const frameStyle = window.getComputedStyle(layers.progressFrame);
+    const border = parseFloat(frameStyle.borderLeftWidth) || 9;
+    const innerInsetX = border + 1;
+    const innerInsetY = border + 1;
+    const innerWidth = Math.max(1, frameWidth - border * 2 - 1);
+    const innerHeight = Math.max(1, frameHeight - (border + 1) * 2);
+    const markerTop =
+      frameTop + frameHeight * (PROGRESS_BASE.markerTopOffset / PROGRESS_BASE.frameH);
+    const amountTop =
+      frameTop + frameHeight * (PROGRESS_BASE.amountTopOffset / PROGRESS_BASE.frameH);
+
+    if (layers.progressMarker) {
+      layers.progressMarker.style.left = "";
+      layers.progressMarker.style.top = `${markerTop}px`;
+    }
+    if (layers.donationAmount) {
+      layers.donationAmount.style.top = `${amountTop}px`;
+    }
+
+    window.MichiSite?.setProgressLayout?.({
+      barLeft: frameLeft + innerInsetX,
+      barTop: frameTop + innerInsetY,
+      barHeight: innerHeight,
+      innerWidth,
+      markerOffset: markerTop - (frameTop + innerInsetY + innerHeight),
+      markerTop,
+      amountTop,
+    });
   }
 
   function applySceneMinHeight() {
@@ -620,31 +1031,18 @@
     const progressHeight = progressWidth * (PROGRESS_BASE.frameH / PROGRESS_BASE.frameW);
     const progressLeft = (window.innerWidth - progressWidth) / 2;
     const progressTop = window.innerHeight - ribbonHeight + 20;
-    setRectPx(layers.progressFrame, progressLeft, progressTop, progressWidth, progressHeight);
-    shiftProgressLabels(1, {
+    applyProgressChrome({
       x: progressLeft,
       y: progressTop,
       w: progressWidth,
       h: progressHeight,
     });
 
-    const frameStyle = window.getComputedStyle(layers.progressFrame);
-    const border = parseFloat(frameStyle.borderLeftWidth) || 9;
-    const innerInsetX = border + 1;
-    const innerInsetY = border + 1;
-    const innerWidth = Math.max(1, progressWidth - border * 2 - 1);
-    const innerHeight = Math.max(1, progressHeight - (border + 1) * 2);
-    const markerTop = progressTop + progressHeight * (PROGRESS_BASE.markerTopOffset / PROGRESS_BASE.frameH);
-    const amountTop = progressTop + progressHeight * (PROGRESS_BASE.amountTopOffset / PROGRESS_BASE.frameH);
-    window.MichiSite?.setProgressLayout?.({
-      barLeft: progressLeft + innerInsetX,
-      barTop: progressTop + innerInsetY,
-      barHeight: innerHeight,
-      innerWidth,
-      markerOffset: markerTop - (progressTop + innerInsetY + innerHeight),
-      markerTop,
-      amountTop,
-    });
+    if (progressGroup) {
+      progressGroup.style.opacity = "1";
+      progressGroup.style.pointerEvents = "auto";
+      progressGroup.style.zIndex = "31";
+    }
 
     if (mobileMenuBtn) {
       mobileMenuBtn.style.display = "block";
@@ -682,54 +1080,40 @@
     articleInner.style.paddingBottom = `${DESKTOP_ARTICLE_PADDING_BOTTOM}px`;
     if (mobileMenuBtn) mobileMenuBtn.style.display = "none";
     if (mobileMenuPanel) mobileMenuPanel.style.height = "0px";
-    [
-      layers.rightGrey,
-      layers.heroBlack,
-      layers.heroTitle,
-      layers.greeting,
-      layers.intro,
-      layers.portrait,
-      layers.article,
-      layers.donationBorder,
-      layers.footerBar,
-      layers.footerBg,
-      layers.donate,
-      layers.donationForms,
-      layers.donationInfo,
-    ].forEach((el) => {
-      if (el) el.style.zIndex = "";
-    });
-
     const y = getRenderY();
     const raw = clamp01(y / transitionPx);
     const pScroll = prefersReduced ? (raw >= 0.5 ? 1 : 0) : raw;
-    const pLayout = pScroll;
+    const pDonation = prefersReduced
+      ? donationPanelT > 0.5
+        ? 1
+        : 0
+      : donationPanelT;
     lastProgress = pScroll;
 
-    applyRect("leftBg", layers.leftBg, pLayout);
-    applyRect("divider", layers.divider, pLayout);
-    applyRect("rightGrey", layers.rightGrey, pLayout);
-    applyRect("heroBlack", layers.heroBlack, pLayout);
-    applyRect("heroTitle", layers.heroTitle, pLayout, { height: false });
+    applyRect("leftBg", layers.leftBg, pScroll);
+    applyRect("divider", layers.divider, pScroll);
+    applyRect("rightGrey", layers.rightGrey, pScroll);
+    applyRect("heroBlack", layers.heroBlack, pScroll);
+    applyRect("heroTitle", layers.heroTitle, pScroll, { height: false });
     layers.heroTitle.style.right = "";
     layers.heroTitle.style.transform = "";
     layers.heroTitle.style.transformOrigin = "";
-    lerpTitleTypography(pLayout);
+    lerpTitleTypography(pScroll);
 
-    const greetingRect = applyRect("greeting", layers.greeting, pLayout, { height: false });
+    const greetingRect = applyRect("greeting", layers.greeting, pScroll, { height: false });
     layers.greeting.style.whiteSpace = "nowrap";
-    const introRect = applyRect("intro", layers.intro, pLayout, { height: false });
+    const introRect = applyRect("intro", layers.intro, pScroll, { height: false });
     if (greetingRect && introRect && layers.greeting && layers.intro) {
       const greetingHeight = layers.greeting.getBoundingClientRect().height;
       const introTop = greetingRect.y + greetingHeight + sy(2);
       setRectPx(layers.intro, introRect.x, introTop, introRect.w, introRect.h);
     }
-    applyRect("portrait", layers.portrait, pLayout);
+    applyRect("portrait", layers.portrait, pScroll);
 
-    applyRect("nav", layers.nav, pLayout);
-    const articleRect = resolveRect("article", pLayout);
-    const articleTop = articleRect ? articleRect.y : sy(lerp(ARTICLE_TOP_FROM, ARTICLE_TOP_TO, pLayout));
-    const footerRect = resolveRect("footerBar", pLayout);
+    applyNavInHero(pScroll);
+    const articleRect = resolveRect("article", pScroll);
+    const articleTop = articleRect ? articleRect.y : sy(lerp(ARTICLE_TOP_FROM, ARTICLE_TOP_TO, pScroll));
+    const footerRect = resolveRect("footerBar", pDonation);
     const footerTop = footerRect ? footerRect.y : sy(FOOTER_TOP);
     const articleHeight = Math.max(1, footerTop - articleTop);
     const dynamicArticleScrollMax = Math.max(0, articleInner.scrollHeight - articleHeight);
@@ -742,22 +1126,39 @@
       setRectPx(layers.article, articleRect.x, articleTop, articleRect.w, articleHeight);
     }
 
-    applyRect("donationBorder", layers.donationBorder, pLayout);
-    applyRect("footerBar", layers.footerBar, pLayout);
-    applyRect("footerBg", layers.footerBg, pLayout);
-    applyRect("donate", layers.donate, pLayout);
-    applyRect("donationForms", layers.donationForms, pLayout);
-    applyRect("donationInfo", layers.donationInfo, pLayout);
+    applyRect("donationBorder", layers.donationBorder, pDonation);
+    applyRect("footerBar", layers.footerBar, pDonation);
+    applyRect("footerBg", layers.footerBg, pDonation);
+    applyRect("donationForms", layers.donationForms, pDonation);
+    applyRect("donationInfo", layers.donationInfo, pDonation);
+    const atFooterZone = fadeIn(pScroll, 0.72, 0.96);
+    applyFooterRibbonElements(pScroll, pDonation, atFooterZone);
 
-    const progressRect = applyRect("progressFrame", layers.progressFrame, pLayout);
-    shiftProgressLabels(pLayout, progressRect);
+    if (layers.readMore) {
+      const readMoreVisible = fadeOut(pScroll, 0.35, 0.72) * fadeOut(pDonation, 0, 0.1);
+      if (readMoreVisible > 0.02) {
+        const readPx = designRectToPx(LANDING_CHROME.readMore);
+        setRectPx(layers.readMore, readPx.x, readPx.y, readPx.w, readPx.h);
+        setOpacity(layers.readMore, readMoreVisible);
+        layers.readMore.style.pointerEvents = readMoreVisible > 0.2 ? "auto" : "none";
+      } else {
+        setOpacity(layers.readMore, 0);
+        layers.readMore.style.pointerEvents = "none";
+      }
+    }
 
-    const introFade = fadeOut(pLayout, 0.12, 0.56);
-    const landingFade = fadeOut(pLayout, 0.18, 0.68);
-    const transformedFade = fadeIn(pLayout, 0.62, 0.94);
-    const panelFade = fadeIn(pLayout, 0.52, 0.9);
-    const donateCompactFade = transformedFade * fadeOut(pLayout, 0.68, 0.86);
-    const panelContentFade = fadeIn(pLayout, 0.58, 0.92);
+    const progressRectPx = designRectToPx(designProgressRect(pScroll, pDonation));
+    applyProgressChrome(progressRectPx);
+
+    const introFade = fadeOut(pScroll, 0.12, 0.56);
+    const landingFade = fadeOut(pScroll, 0.18, 0.68);
+    const transformedFade = fadeIn(pScroll, 0.62, 0.94);
+    const panelOpen = pDonation > 0.04;
+    const progressVisible = 1;
+    const panelContentFade = panelOpen ? fadeIn(pDonation, 0.02, 0.2) : 0;
+    const footerChromeFade = Math.max(atFooterZone, panelContentFade);
+
+    applyDesktopLayerStack(pDonation);
 
     setOpacity(layers.divider, landingFade);
     setOpacity(layers.rightGrey, landingFade);
@@ -768,52 +1169,44 @@
     setOpacity(layers.nav, transformedFade);
     setOpacity(cutout, transformedFade);
     setOpacity(layers.article, transformedFade);
-    setOpacity(layers.donationBorder, panelFade);
-    setOpacity(layers.footerBar, panelFade);
-    setOpacity(layers.footerBg, panelFade);
-    setOpacity(layers.donate, donateCompactFade);
-    setLayerVisible(layers.donationForms, panelContentFade);
-    setLayerVisible(layers.donationInfo, panelContentFade);
+    document.body.classList.toggle("side-nav-visible", transformedFade > 0.12);
+    if (layers.heroBlack) {
+      layers.heroBlack.style.overflow = "hidden";
+    }
+    setOpacity(layers.donationBorder, footerChromeFade);
+    setOpacity(layers.footerBar, footerChromeFade);
+    setOpacity(layers.footerBg, footerChromeFade);
+    if (panelOpen) {
+      setOpacity(layers.donationForms, Math.max(panelContentFade, 0.98));
+      setOpacity(layers.donationInfo, Math.max(panelContentFade, 0.98));
+      if (layers.donationForms) layers.donationForms.style.pointerEvents = "auto";
+      if (layers.donationInfo) layers.donationInfo.style.pointerEvents = "auto";
+    } else {
+      setLayerVisible(layers.donationForms, 0);
+      setLayerVisible(layers.donationInfo, 0);
+    }
 
-    const revealLift = articleOffset > 0 ? 0 : sy(112) * fadeOut(pLayout, 0.58, 1);
+    const donationTargetsClickable = !isDonationPanelOpen();
+    if (layers.footerBar) {
+      layers.footerBar.style.pointerEvents = "none";
+    }
+    if (layers.footerBg) {
+      layers.footerBg.style.pointerEvents = panelOpen ? "auto" : "none";
+    }
+    if (progressGroup) {
+      progressGroup.style.opacity = String(progressVisible);
+      progressGroup.style.pointerEvents = "none";
+      progressGroup.classList.toggle(
+        "donation-open-target",
+        donationTargetsClickable && progressVisible > 0.08
+      );
+    }
+
+    const revealLift = articleOffset > 0 ? 0 : sy(112) * fadeOut(pScroll, 0.58, 1);
     articleInner.style.transform = `translateY(${revealLift - articleOffset}px)`;
 
-    const activeIndex = forcedIndex != null ? forcedIndex : activeSection(articleOffset, sy(articleHeight));
-    updateCutout(activeIndex);
-
-    const progressRectMetrics = progressRect;
-
-    const frameLeft = progressRectMetrics
-      ? progressRectMetrics.x
-      : sx(lerp(99, DONATION_LEFT_X, pLayout));
-    const frameTop = progressRectMetrics
-      ? progressRectMetrics.y
-      : sy(lerp(468, DONATION_PROGRESS_Y, pLayout));
-    const frameWidth = progressRectMetrics ? progressRectMetrics.w : sx(441);
-    const frameHeight = progressRectMetrics ? progressRectMetrics.h : sy(47);
-    const frameStyle = window.getComputedStyle(layers.progressFrame);
-    const border = parseFloat(frameStyle.borderLeftWidth) || 9;
-    const innerInsetX = border + 1;
-    const innerInsetY = border + 1;
-    const innerWidth = Math.max(1, frameWidth - border * 2 - 1);
-    const innerHeight = Math.max(1, frameHeight - (border + 1) * 2);
-    const markerTop = frameTop + frameHeight * (PROGRESS_BASE.markerTopOffset / PROGRESS_BASE.frameH);
-    const amountTop = frameTop + frameHeight * (PROGRESS_BASE.amountTopOffset / PROGRESS_BASE.frameH);
-    if (layers.progressMarker) {
-      layers.progressMarker.style.top = `${markerTop}px`;
-    }
-    if (layers.donationAmount) {
-      layers.donationAmount.style.top = `${amountTop}px`;
-    }
-    window.MichiSite?.setProgressLayout?.({
-      barLeft: frameLeft + innerInsetX,
-      barTop: frameTop + innerInsetY,
-      barHeight: innerHeight,
-      innerWidth,
-      markerOffset: markerTop - (frameTop + innerInsetY + innerHeight),
-      markerTop,
-      amountTop,
-    });
+    const activeIndex = activeSection(articleOffset, sy(articleHeight));
+    updateCutout(resolveCutoutIndex(activeIndex));
   }
 
   navLinks.forEach((link, index) => {
@@ -869,11 +1262,73 @@
     });
   }
 
+  function isInsideExpandedDonation(target) {
+    if (!(target instanceof Element)) return false;
+    return Boolean(
+      target.closest(
+        "#layer-donation-forms, #layer-donation-info, #layer-status, #donation-checkout-overlay"
+      )
+    );
+  }
+
+  const figmaFrame = document.getElementById("figma-frame");
+  figmaFrame?.addEventListener("click", (event) => {
+    const target = event.target;
+    if (!(target instanceof Element) || isMobileLayout()) return;
+    if (target.closest("#layer-read-more")) {
+      event.stopPropagation();
+      scrollToArticleStart({ smooth: !prefersReduced });
+      return;
+    }
+    if (!isDonationPanelOpen() && target.closest("#progress-group.donation-open-target")) {
+      event.stopPropagation();
+      openDonationPanel();
+      return;
+    }
+    if (!isDonationPanelOpen() && target.closest("#layer-donate-compact")) {
+      event.stopPropagation();
+      openDonationPanel();
+      return;
+    }
+    if (!isDonationPanelOpen() && target.closest("#layer-status.donation-open-target")) {
+      event.stopPropagation();
+      openDonationPanel();
+    }
+  });
+
+  [layers.donationForms, layers.donationInfo].forEach((el) => {
+    el?.addEventListener("click", (event) => {
+      event.stopPropagation();
+    });
+  });
+
+  document.addEventListener("click", (event) => {
+    if (!isDonationPanelOpen() || isMobileLayout()) return;
+    const target = event.target;
+    if (!(target instanceof Element)) return;
+    if (isInsideExpandedDonation(target)) return;
+    if (
+      target.closest(
+        "#progress-group, #layer-donate-compact, #layer-status.donation-open-target"
+      )
+    ) {
+      return;
+    }
+    closeDonationPanel();
+  });
+
+  document.addEventListener("keydown", (event) => {
+    if (event.key !== "Escape") return;
+    if (document.body.classList.contains("checkout-open")) return;
+    if (isDonationPanelOpen()) closeDonationPanel();
+  });
+
   window.addEventListener("resize", () => {
     const nowMobile = isMobileLayout();
     if (nowMobile !== lastMobileBreakpoint) {
       mobileMenuOpen = false;
       document.body.classList.remove("menu-open");
+      if (donationPanelT > 0) setDonationPanelOpen(false, { animate: false });
     }
     lastMobileBreakpoint = nowMobile;
 
@@ -887,7 +1342,17 @@
     }
     render();
   });
-  window.addEventListener("scroll", render, { passive: true });
+  let renderQueued = false;
+  function scheduleRender() {
+    if (renderQueued) return;
+    renderQueued = true;
+    requestAnimationFrame(() => {
+      renderQueued = false;
+      render();
+    });
+  }
+
+  window.addEventListener("scroll", scheduleRender, { passive: true });
 
   updateSceneHeight();
   render();
