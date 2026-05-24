@@ -1,0 +1,266 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Danke – Förderkreis Michael Thomsen</title>
+  <link rel="stylesheet" href="./css/german-hyphenation.css" />
+  <style>
+    @font-face {
+      font-family: "Futura";
+      src:
+        local("Futura Medium"),
+        local("Futura-Medium"),
+        url("./fonts/futura-medium.ttf") format("truetype");
+      font-style: normal;
+      font-weight: 500;
+      font-display: swap;
+    }
+    @font-face {
+      font-family: "Futura";
+      src:
+        local("Futura Bold"),
+        local("Futura-Bold"),
+        url("./fonts/futura-bold.ttf") format("truetype");
+      font-style: normal;
+      font-weight: 700;
+      font-display: swap;
+    }
+    @font-face {
+      font-family: "Futura Condensed";
+      src: url("./fonts/futura-condensed-medium.ttf") format("truetype");
+      font-style: normal;
+      font-weight: 500;
+      font-display: swap;
+    }
+    @font-face {
+      font-family: "Futura Condensed";
+      src: url("./fonts/futura-condensed-extrabold.ttf") format("truetype");
+      font-style: normal;
+      font-weight: 800;
+      font-display: swap;
+    }
+    * { box-sizing: border-box; }
+    html, body {
+      margin: 0;
+      min-height: 100%;
+      font-family: "Futura", "Century Gothic", "Trebuchet MS", sans-serif;
+    }
+    .thank-you-black {
+      position: fixed;
+      left: 0;
+      top: 0;
+      bottom: 0;
+      width: 33.333%;
+      background: #000000;
+      color: #fdfdfb;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      z-index: 2;
+    }
+    .thank-you-black-title-wrap {
+      flex: 1 1 auto;
+      min-height: 0;
+      overflow: hidden;
+      padding: 36px 18px 12px;
+      display: flex;
+      align-items: flex-start;
+      justify-content: flex-end;
+    }
+    .thank-you-black .hero-title,
+    .thank-you-black .hero-title span {
+      font-family: "Futura Condensed", sans-serif;
+      font-synthesis: style;
+      text-align: right;
+    }
+    .thank-you-black .hero-title {
+      white-space: normal;
+      transform: scale(0.52);
+      transform-origin: top right;
+      width: 192%;
+      margin: 0 0 0 -92%;
+      line-height: 1.12;
+    }
+    .thank-you-black .hero-title span[data-weight="500"]:not(.title-colon) {
+      font-style: italic;
+    }
+    .thank-you-black-image {
+      flex: 0 0 auto;
+      width: 100%;
+      height: auto;
+      max-height: 48vh;
+      object-fit: cover;
+      object-position: center bottom;
+      display: block;
+    }
+    .thank-you-white {
+      margin-left: 33.333%;
+      background: #fdfdfb;
+      color: #111111;
+      padding: 48px clamp(28px, 5vw, 72px);
+      min-height: 100vh;
+    }
+    .thank-you-bank-notice {
+      font-size: 14px;
+      font-weight: 700;
+      text-transform: uppercase;
+      line-height: 1.5;
+      margin: 0 0 28px;
+      letter-spacing: 0.02em;
+    }
+    .thank-you-bank-notice p {
+      margin: 0 0 10px;
+    }
+    .thank-you-message {
+      font-size: clamp(24px, 3.2vw, 40px);
+      line-height: 1.45;
+      font-weight: 500;
+      text-transform: lowercase;
+      margin: 0 0 36px;
+      max-width: 52ch;
+    }
+    .thank-you-newsletter {
+      margin-top: 8px;
+      max-width: 520px;
+    }
+    .thank-you-newsletter h2 {
+      font-size: 15px;
+      font-weight: 700;
+      text-transform: uppercase;
+      margin: 0 0 14px;
+      letter-spacing: 0.04em;
+    }
+    .thank-you-field {
+      position: relative;
+      height: 40px;
+      width: 100%;
+      max-width: 100%;
+      background: #d9d9d9;
+      margin-bottom: 14px;
+      cursor: text;
+    }
+    .thank-you-field label {
+      position: absolute;
+      left: 12px;
+      top: 50%;
+      transform: translateY(-50%);
+      font-weight: 500;
+      text-transform: uppercase;
+      font-size: 14px;
+      color: #666666;
+      pointer-events: none;
+      z-index: 1;
+    }
+    .thank-you-field input {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      margin: 0;
+      padding: 0 12px;
+      border: none;
+      background: transparent;
+      font-family: inherit;
+      font-weight: 500;
+      font-size: 15px;
+      color: #000000;
+      outline: none;
+      z-index: 2;
+      text-transform: none;
+    }
+    .thank-you-field input:placeholder-shown {
+      color: transparent;
+    }
+    .thank-you-field:has(input:not(:placeholder-shown)) label {
+      opacity: 0;
+    }
+    .thank-you-field:focus-within {
+      outline: 2px solid #4c4c4c;
+      outline-offset: -2px;
+    }
+    #thank-you-subscribe {
+      padding: 10px 22px;
+      border: none;
+      background: #000000;
+      color: #fdfdfb;
+      font-family: inherit;
+      font-weight: 700;
+      font-size: 14px;
+      text-transform: uppercase;
+      cursor: pointer;
+    }
+    #thank-you-subscribe:hover {
+      background: #333333;
+    }
+    .thank-you-status {
+      margin-top: 12px;
+      font-size: 14px;
+      font-weight: 500;
+    }
+    .thank-you-status.ok { color: #2b6a2e; }
+    .thank-you-status.err { color: #8b1a1a; }
+    @media (max-width: 820px) {
+      .thank-you-black {
+        position: fixed;
+        left: 0;
+        right: 0;
+        top: 0;
+        bottom: auto;
+        width: 100%;
+        height: 42vh;
+        max-height: 42vh;
+      }
+      .thank-you-black-title-wrap {
+        padding: 20px 14px 8px;
+      }
+      .thank-you-black .hero-title {
+        transform: scale(0.42);
+        width: 238%;
+        margin-left: -138%;
+      }
+      .thank-you-black-image {
+        max-height: 22vh;
+      }
+      .thank-you-white {
+        margin-left: 0;
+        margin-top: 42vh;
+        padding: 32px 24px 48px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <aside class="thank-you-black" aria-label="Förderkreis">
+    <div class="thank-you-black-title-wrap">
+      <div id="thank-you-title" class="hero-title">
+        <span data-weight="800" style="color:#fdfdfb;font-size:30.24px;font-weight:800;line-height:37.26px;letter-spacing:0.91px;">Förderkreis</span><span data-weight="500" style="color:#fdfdfb;font-size:33.48px;font-weight:500;line-height:37.26px;letter-spacing:1px;"> </span><span data-weight="500" style="color:#fdfdfb;font-size:26.46px;font-weight:500;line-height:37.26px;letter-spacing:0.79px;">für </span><span data-weight="800" style="color:#fdfdfb;font-size:30.24px;font-weight:800;line-height:37.26px;letter-spacing:0.91px;">Michael Thomsen</span><span data-weight="500" class="title-colon" style="color:#fdfdfb;font-size:30.24px;font-weight:500;line-height:37.26px;letter-spacing:0.91px;">:<br></span><span data-weight="800" style="color:#fdfdfb;font-size:27px;font-weight:800;line-height:48.96px;">„</span><span data-weight="800" style="color:#fdfdfb;font-size:45px;font-weight:800;line-height:48.96px;">Master of Public Policy</span><span data-weight="800" style="color:#fdfdfb;font-size:27px;font-weight:800;line-height:48.96px;">“<br></span><span data-weight="500" style="color:#fdfdfb;font-size:26.46px;font-weight:500;line-height:40.86px;letter-spacing:3.7px;">an der</span><span data-weight="500" style="color:#fdfdfb;font-size:30.24px;font-weight:500;line-height:40.86px;letter-spacing:4.23px;"> </span><span data-weight="800" style="color:#fdfdfb;font-size:30.24px;font-weight:800;line-height:40.86px;letter-spacing:4.23px;">Hertie School</span><span data-weight="500" style="color:#fdfdfb;font-size:30.24px;font-weight:500;line-height:40.86px;letter-spacing:4.23px;"> </span><span data-weight="500" style="color:#fdfdfb;font-size:26.46px;font-weight:500;line-height:40.86px;letter-spacing:3.7px;">in </span><span data-weight="800" style="color:#fdfdfb;font-size:30.24px;font-weight:800;line-height:40.86px;letter-spacing:4.23px;">Berlin</span>
+      </div>
+    </div>
+    <img
+      class="thank-you-black-image"
+      src="./Untitled-1.png"
+      alt="Portrait von Michael Thomsen"
+      width="496"
+      height="437"
+    />
+  </aside>
+  <main class="thank-you-white">
+    <div id="thank-you-bank-notice" class="thank-you-bank-notice" hidden></div>
+    <p class="thank-you-message" id="thank-you-message"></p>
+    <section class="thank-you-newsletter" aria-labelledby="thank-you-newsletter-heading">
+      <h2 id="thank-you-newsletter-heading">Newsletter</h2>
+      <p style="font-size:15px;line-height:1.45;margin:0 0 14px;text-transform:none;">
+        Möchtet ihr in Zukunft Updates aus meinem Studium erhalten? Tragt eure E-Mail ein — ich freue mich sehr.
+      </p>
+      <div class="thank-you-field">
+        <label for="thank-you-email">E-Mail</label>
+        <input id="thank-you-email" type="email" name="email" autocomplete="email" placeholder=" " />
+      </div>
+      <button type="button" id="thank-you-subscribe">Anmelden</button>
+      <p id="thank-you-status" class="thank-you-status" aria-live="polite"></p>
+    </section>
+  </main>
+  <script src="./js/thank-you.js?v=202605191500"></script>
+</body>
+</html>

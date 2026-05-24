@@ -65,6 +65,7 @@
     #layer-hero-black {
       transition: none;
       overflow: hidden;
+      display: block;
     }
 
     .hero-title, .hero-title span {
@@ -75,29 +76,139 @@
     .hero-title { white-space: nowrap; }
     .hero-title span[data-weight="500"]:not(.title-colon) { font-style: italic; }
 
-    #layer-hero-black {
+    #hero-nav-shell {
+      position: absolute;
+      left: 0;
+      right: 0;
+      display: flex;
+      flex-direction: row;
+      align-items: stretch;
+      gap: 8px;
+      box-sizing: border-box;
       overflow: hidden;
+      pointer-events: none;
+      opacity: 0;
+    }
+    body.side-nav-visible #hero-nav-shell {
+      pointer-events: auto;
+    }
+    .hero-nav-scrollbar {
+      flex: 0 0 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.15s ease;
+    }
+    .hero-nav-scrollbar.is-visible {
+      opacity: 1;
+      pointer-events: auto;
+    }
+    .hero-nav-scroll-btn {
+      flex: 0 0 16px;
+      width: 14px;
+      border: none;
+      padding: 0;
+      background: #808080;
+      cursor: pointer;
+    }
+    .hero-nav-scroll-btn::after {
+      content: "";
+      display: block;
+      width: 6px;
+      height: 6px;
+      margin: 5px auto;
+      border: solid #fdfdfb;
+      border-width: 2px 2px 0 0;
+    }
+    .hero-nav-scroll-btn[data-dir="-1"]::after {
+      transform: rotate(-45deg) translate(1px, 2px);
+    }
+    .hero-nav-scroll-btn[data-dir="1"]::after {
+      transform: rotate(135deg) translate(1px, -1px);
+    }
+    .hero-nav-scroll-track {
+      flex: 1 1 auto;
+      min-height: 28px;
+      background: #808080;
+      position: relative;
+    }
+    .hero-nav-scroll-thumb {
+      position: absolute;
+      left: 2px;
+      right: 2px;
+      top: 0;
+      background: #fdfdfb;
+      border-radius: 1px;
+      min-height: 10px;
+      transition: top 0.08s linear, height 0.08s linear;
+    }
+    #hero-nav-scroll {
+      flex: 1 1 auto;
+      min-width: 0;
+      min-height: 0;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      align-items: stretch;
+    }
+    #hero-nav-scroll.can-scroll {
+      overflow-y: auto;
+      scrollbar-width: none;
+    }
+    #hero-nav-scroll.can-scroll::-webkit-scrollbar {
+      display: none;
     }
     #layer-nav {
+      position: relative;
+      left: auto;
+      top: auto;
+      width: 100%;
+      height: auto;
       color: #808080;
-      font-size: clamp(22px, 2vw, 30px);
+      font-size: 30px;
       font-weight: 700;
-      line-height: 1.2;
-      opacity: 0;
+      line-height: 1.15;
       box-sizing: border-box;
       padding: 0;
       text-align: right;
-      overflow: hidden;
+      overflow: visible;
       transform: scale(var(--nav-fit, 1));
-      transform-origin: 100% 0%;
+      transform-origin: 100% 0;
     }
     #layer-nav .nav-row {
       position: relative;
-      margin-bottom: calc(33px * var(--nav-fit, 1));
+      margin: 0 0 calc(33px * var(--nav-fit, 1));
       text-align: right;
       width: 100%;
     }
     #layer-nav .nav-row:last-child { margin-bottom: 0; }
+    .hero-legal-links {
+      position: absolute;
+      left: 0;
+      right: 0;
+      margin: 0;
+      padding: 0 2px;
+      font-size: 14px;
+      line-height: 1.45;
+      font-weight: 500;
+      color: #808080;
+      text-align: right;
+      text-transform: none;
+      z-index: 3;
+      pointer-events: none;
+    }
+    body.side-nav-visible .hero-legal-links {
+      pointer-events: auto;
+    }
+    .hero-legal-links a {
+      color: #606060;
+      text-decoration: underline;
+    }
+    .hero-legal-links a:hover {
+      color: #fdfdfb;
+    }
     #layer-nav .nav-link {
       display: block;
       width: 100%;
@@ -552,6 +663,41 @@
       outline: 2px solid #4c4c4c;
       outline-offset: -2px;
     }
+    #layer-donation-forms .donation-forms-field.is-invalid,
+    #layer-donation-forms .donation-forms-betrag-wrap.is-invalid .donation-forms-field--betrag,
+    #layer-donation-forms .donation-forms-field--monate.is-invalid {
+      outline: 2px solid #b3261e;
+      outline-offset: -2px;
+      background: #f5d6d4;
+    }
+    .donation-forms-summary-error {
+      display: block;
+      margin: 0 0 8px;
+      padding: 0 2px;
+      font-size: 11px;
+      font-weight: 700;
+      line-height: 1.35;
+      color: #b3261e;
+      text-align: center;
+      text-transform: none;
+    }
+    .donation-forms-summary-error[hidden] {
+      display: none !important;
+    }
+    .donation-checkout-errors {
+      margin: 12px 0 0;
+      padding: 10px 12px;
+      text-align: right;
+      background: rgba(179, 38, 30, 0.2);
+      border: 1px solid rgba(255, 120, 110, 0.55);
+      color: #ffd4d0;
+      font-size: 13px;
+      font-weight: 700;
+      line-height: 1.4;
+    }
+    .donation-checkout-errors[hidden] {
+      display: none !important;
+    }
     #layer-donation-forms .donation-forms-field--email {
       grid-column: 1 / -1;
       width: 75%;
@@ -610,8 +756,11 @@
       padding: 24px;
       box-sizing: border-box;
     }
-    #donation-checkout-overlay[hidden] {
+    #donation-checkout-overlay[hidden]:not(.is-open) {
       display: none !important;
+    }
+    #donation-checkout-overlay.is-open {
+      display: flex !important;
     }
     body.checkout-open {
       overflow: hidden;
@@ -634,7 +783,7 @@
     .donation-checkout-modal {
       position: relative;
       width: min(920px, calc(100vw - 160px));
-      max-height: min(560px, calc(100vh - 160px));
+      max-height: min(720px, calc(100vh - 120px));
       background: #000000;
       color: #fdfdfb;
       padding: 28px 32px 24px;
@@ -660,12 +809,36 @@
       min-height: 260px;
     }
     .donation-checkout-left {
-      font-size: 15px;
-      line-height: 1.45;
+      font-size: 14px;
+      line-height: 1.5;
       font-weight: 500;
+      color: #d9d9d9;
     }
     .donation-checkout-left p {
       margin: 0 0 12px;
+    }
+    .donation-checkout-dates {
+      margin: 14px 0 10px;
+    }
+    .donation-checkout-dates div {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      margin: 0 0 4px;
+    }
+    .donation-checkout-separator {
+      border: none;
+      border-top: 1px solid rgba(255, 255, 255, 0.35);
+      margin: 14px 0 12px;
+    }
+    .donation-checkout-bank {
+      font-size: 14px;
+      color: #fdfdfb;
+      line-height: 1.5;
+    }
+    .donation-checkout-bank strong {
+      color: #ffffff;
+      font-weight: 700;
     }
     .donation-checkout-right {
       display: flex;
@@ -723,13 +896,16 @@
     #donation-checkout-submit:hover {
       background: #6a6a6a;
     }
-    .donation-checkout-details {
-      margin-top: 18px;
-      padding-top: 16px;
-      border-top: 1px solid rgba(255, 255, 255, 0.2);
-    }
-    .donation-checkout-details p {
-      margin: 0 0 10px;
+    .visually-hidden {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      padding: 0;
+      margin: -1px;
+      overflow: hidden;
+      clip: rect(0, 0, 0, 0);
+      white-space: nowrap;
+      border: 0;
     }
     #progress-group { position: absolute; inset: 0; pointer-events: none; }
     #progress-group.donation-open-target > * { cursor: pointer; }
@@ -895,19 +1071,19 @@
     body.mobile-layout .date-label,
     body.mobile-layout .add-label { display: none; }
 
-    #article-scroll-inner .article-legal-links {
-      margin-top: 48px;
-      padding-bottom: 32px;
-      font-size: 9px;
+    body.mobile-layout #mobile-menu-panel .hero-legal-links {
+      margin-top: 14px;
+      padding-top: 10px;
+      border-top: 1px solid rgba(128, 128, 128, 0.35);
+      font-size: 14px;
       line-height: 1.45;
+      font-weight: 500;
       color: #808080;
+      text-align: right;
     }
-    #article-scroll-inner .article-legal-links a {
+    body.mobile-layout #mobile-menu-panel .hero-legal-links a {
       color: #606060;
       text-decoration: underline;
-    }
-    #article-scroll-inner .article-legal-links a:hover {
-      color: #111;
     }
 
   </style>
@@ -919,6 +1095,13 @@
     <a href="#section-hertie" data-mobile-nav="1">Warum die Hertie School?</a>
     <a href="#section-finance" data-mobile-nav="2">Die Finanzierung</a>
     <a href="#section-circle" data-mobile-nav="3">Der Förderkreis</a>
+    <footer class="hero-legal-links" aria-label="Rechtliches">
+      <a href="./impressum.html">Impressum</a>
+      <span aria-hidden="true"> · </span>
+      <a href="./datenschutz.html">Datenschutzerklärung</a>
+      <span aria-hidden="true"> · </span>
+      <a href="./agb.html">AGB</a>
+    </footer>
   </nav>
   <div id="build-tag">build 202605190008 <a href="./admin.html" title="Admin">admin</a></div>
   <div class="scene" id="scene">
@@ -927,13 +1110,31 @@
       <div id="layer-divider" class="layer" style="left:577px;top:0;width:15px;height:832px;background:#000;"></div>
       <div id="layer-right-grey" class="layer" style="left:592px;top:0;width:688px;height:832px;background:#808080;"></div>
       <div id="layer-hero-black" class="layer" style="left:74px;top:0;width:518px;height:398px;background:#000;">
-        <nav id="layer-nav" class="layer">
-          <div id="layer-cutout"></div>
-          <div class="nav-row"><a class="nav-link" href="#section-story" data-nav-index="0">Meine Geschichte</a></div>
-          <div class="nav-row"><a class="nav-link" href="#section-hertie" data-nav-index="1">Warum die Hertie School?</a></div>
-          <div class="nav-row"><a class="nav-link" href="#section-finance" data-nav-index="2">Die Finanzierung</a></div>
-          <div class="nav-row"><a class="nav-link" href="#section-circle" data-nav-index="3">Der Förderkreis</a></div>
-        </nav>
+        <div id="hero-nav-shell">
+          <div id="hero-nav-scrollbar" class="hero-nav-scrollbar" aria-hidden="true">
+            <button type="button" class="hero-nav-scroll-btn" data-dir="-1" aria-label="Menü nach oben scrollen"></button>
+            <div class="hero-nav-scroll-track" aria-hidden="true">
+              <div class="hero-nav-scroll-thumb"></div>
+            </div>
+            <button type="button" class="hero-nav-scroll-btn" data-dir="1" aria-label="Menü nach unten scrollen"></button>
+          </div>
+          <div id="hero-nav-scroll">
+            <nav id="layer-nav" class="layer">
+              <div id="layer-cutout"></div>
+              <div class="nav-row"><a class="nav-link" href="#section-story" data-nav-index="0">Meine Geschichte</a></div>
+              <div class="nav-row"><a class="nav-link" href="#section-hertie" data-nav-index="1">Warum die Hertie School?</a></div>
+              <div class="nav-row"><a class="nav-link" href="#section-finance" data-nav-index="2">Die Finanzierung</a></div>
+              <div class="nav-row"><a class="nav-link" href="#section-circle" data-nav-index="3">Der Förderkreis</a></div>
+            </nav>
+          </div>
+        </div>
+        <footer id="hero-legal-links" class="hero-legal-links" aria-label="Rechtliches">
+          <a href="./impressum.html">Impressum</a>
+          <span aria-hidden="true"> · </span>
+          <a href="./datenschutz.html">Datenschutzerklärung</a>
+          <span aria-hidden="true"> · </span>
+          <a href="./agb.html">AGB</a>
+        </footer>
       </div>
 
       <div id="hero-title" class="hero-title layer" style="left:-44.68px;top:133.25px;width:617.76px;">
@@ -999,13 +1200,6 @@
     <p>Eure Förderung ist nicht einfach nur eine Wohltätigkeit. Sie schafft soziale Mobilität in unserer Gesellschaft und ist eine Investition in jemanden, der im Gegenzug politische Verantwortung übernimmt und sich für uns alle in den Dienst der Gesellschaft stellt. Ihr könnt euch nicht vorstellen, was dieser Master für mich bedeutet. Für eure Unterstützung bin ich euch von tiefstem Herzen dankbar!</p>
     <p>Wendet euch jederzeit mit Fragen oder Anregungen und Ideen an mich: <a href="mailto:michael.thomsen@uni-wh.de">michael.thomsen@uni-wh.de</a> oder mobil: 0176/32706602</p>
   </section>
-        <footer class="article-legal-links" aria-label="Rechtliches">
-          <a href="./impressum.html">Impressum</a>
-          <span aria-hidden="true"> · </span>
-          <a href="./datenschutz.html">Datenschutzerklärung</a>
-          <span aria-hidden="true"> · </span>
-          <a href="./agb.html">AGB</a>
-        </footer>
       </div>
       </article>
 
@@ -1098,6 +1292,7 @@
                 <span class="donation-forms-euro" style="font-size:21px;color:#a6a6a6;">€</span>
               </div>
             </div>
+            <p id="donation-jetzt-form-error" class="donation-forms-summary-error" hidden role="alert"></p>
             <button type="button" class="donation-forms-panel-cta" data-panel-cta="jetzt">SPENDEN!</button>
           </div>
         </div>
@@ -1132,6 +1327,7 @@
                 <span class="donation-forms-monat-label" style="font-size:21px;color:#a6a6a6;">MONAT</span>
               </div>
             </div>
+            <p id="donation-monatlich-form-error" class="donation-forms-summary-error" hidden role="alert"></p>
             <button type="button" class="donation-forms-panel-cta" data-panel-cta="monatlich">SPENDEN!</button>
           </div>
         </div>
@@ -1174,22 +1370,20 @@
       <div class="donation-checkout-modal" role="dialog" aria-modal="true" aria-labelledby="donation-checkout-title">
         <button type="button" class="donation-checkout-close" aria-label="Schließen">×</button>
         <div class="donation-checkout-grid">
-          <div class="donation-checkout-left" id="donation-checkout-summary" aria-labelledby="donation-checkout-title">
-            <p id="donation-checkout-title" style="font-size:17px;color:#ffffff;font-weight:700;">Vielen Dank für Ihre Unterstützung</p>
-            <p style="font-size:14px;color:#d9d9d9;">Bitte prüfen Sie Ihre Angaben vor dem Absenden.</p>
-            <div id="donation-checkout-details" class="donation-checkout-details"></div>
+          <div class="donation-checkout-left" id="donation-checkout-left" aria-labelledby="donation-checkout-title">
+            <p id="donation-checkout-title" class="visually-hidden">Spendenbestätigung</p>
+            <div id="donation-checkout-left-content"></div>
           </div>
           <div class="donation-checkout-right">
             <div class="donation-checkout-right-inner">
-              <p class="donation-checkout-pledge" style="font-size:13px;color:#d9d9d9;">
-                Mit dem Absenden bestätige ich, dass meine Angaben korrekt sind und ich Michael Thomsen wie angegeben unterstützen möchte.
-              </p>
+              <p class="donation-checkout-pledge" id="donation-checkout-pledge"></p>
               <div class="donation-checkout-actions">
                 <button type="button" id="donation-checkout-paypal" hidden>
                   <img src="./Layer%201.png" alt="Mit PayPal spenden" width="120" height="33" />
                 </button>
                 <button type="button" id="donation-checkout-submit">ABSENDEN</button>
               </div>
+              <div id="donation-checkout-errors" class="donation-checkout-errors" hidden role="alert"></div>
             </div>
           </div>
         </div>
@@ -1199,7 +1393,7 @@
 
   <script src="./js/site-client.js?v=202605182300"></script>
   <script src="./js/donation-forms.js?v=202605182300"></script>
-  <script src="./js/donation-checkout.js?v=202605190004"></script>
-  <script src="./js/scroll-transition.js?v=202605190008"></script>
+  <script src="./js/donation-checkout.js?v=202605191600"></script>
+  <script src="./js/scroll-transition.js?v=202605192200"></script>
 </body>
 </html>

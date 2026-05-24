@@ -91,6 +91,32 @@ class Handler(SimpleHTTPRequestHandler):
         import time
 
         path = urlparse(self.path).path
+
+        if path == "/api/newsletter/subscribe":
+            body = self.read_json_body()
+            current = load_data()
+            email = str(body.get("email", "")).strip().lower()
+            if not email or "@" not in email:
+                self.send_json({"ok": False, "error": "Email required"}, status=400)
+                return
+            for entry in current.get("newsletter", []):
+                if str(entry.get("email", "")).lower() == email:
+                    self.send_json({"ok": True, "entry": entry, "duplicate": True})
+                    return
+            entry = {
+                "id": f"nl-{uuid.uuid4().hex[:8]}",
+                "email": email,
+                "name": str(body.get("name", "")).strip(),
+                "status": body.get("status", "active"),
+                "subscribedAt": body.get("subscribedAt")
+                or __import__("datetime").datetime.utcnow().isoformat() + "Z",
+                "source": "thank-you",
+            }
+            current.setdefault("newsletter", []).append(entry)
+            save_data(current)
+            self.send_json({"ok": True, "entry": entry})
+            return
+
         if path == "/api/login":
             body = self.read_json_body()
             data = load_data()

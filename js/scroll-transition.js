@@ -2,11 +2,24 @@
   const scene = document.getElementById("scene");
   const nav = document.getElementById("layer-nav");
   const cutout = document.getElementById("layer-cutout");
+  const heroNavShell = document.getElementById("hero-nav-shell");
+  const heroNavScroll = document.getElementById("hero-nav-scroll");
+  const heroNavScrollbar = document.getElementById("hero-nav-scrollbar");
+  const heroNavScrollThumb = document.querySelector(".hero-nav-scroll-thumb");
+  const heroLegalLinks = document.getElementById("hero-legal-links");
   const article = document.getElementById("layer-article");
   const articleInner = document.getElementById("article-scroll-inner");
   const mobileMenuBtn = document.getElementById("mobile-menu-btn");
   const mobileMenuPanel = document.getElementById("mobile-menu-panel");
   if (!scene || !nav || !cutout || !article || !articleInner) return;
+
+  const NAV_DESIGN_FONT_PX = 30;
+  const NAV_MIN_READABLE_FIT = 14 / NAV_DESIGN_FONT_PX;
+  const NAV_LEGAL_GAP_PX = 8;
+  let navScrollRaf = null;
+  let cutoutScrollRaf = null;
+  let lastNavFit = 1;
+  let lastCutoutIndex = 0;
 
   const layers = {
     leftBg: document.getElementById("layer-left-bg"),
@@ -501,38 +514,139 @@
     }
   }
 
-  function applyNavInHero(p) {
-    const heroEl = layers.heroBlack;
-    if (!heroEl || !nav) return null;
-    const heroScene = resolveRect("heroBlack", p);
-    if (!heroScene) return null;
-
-    const from = NAV_IN_HERO.from;
-    const to = NAV_IN_HERO.to;
-    const bottomInset = lerp(from.bottom, to.bottom, p);
-    const designH = lerp(from.h, to.h, p);
-    const bottomPx = sy(bottomInset);
-    const leftPadPx = sx(NAV_LEFT_PAD);
-    const w = Math.max(1, heroScene.w - leftPadPx);
-    let h = sy(designH);
-    const maxH = Math.max(sy(100), heroScene.h - bottomPx - sy(8));
-    h = Math.min(h, maxH);
-    const relX = leftPadPx;
-    const relY = Math.max(sy(4), heroScene.h - h - bottomPx);
-    const fitScale = Math.min(1, h / Math.max(1, sy(designH)));
-
-    nav.style.setProperty("--nav-fit", String(fitScale));
-    if (nav.parentElement === heroEl) {
-      nav.style.left = `${relX}px`;
-      nav.style.right = "0";
-      nav.style.top = `${relY}px`;
-      nav.style.width = "auto";
-      nav.style.height = `${h}px`;
-      return { x: heroScene.x + relX, y: heroScene.y + relY, w, h };
+  function updateNavScrollbar() {
+    if (!heroNavScroll || !heroNavScrollbar || !heroNavScrollThumb) return;
+    const maxScroll = Math.max(0, heroNavScroll.scrollHeight - heroNavScroll.clientHeight);
+    const needsScroll = maxScroll > 2;
+    heroNavScroll.classList.toggle("can-scroll", needsScroll);
+    heroNavScrollbar.classList.toggle("is-visible", needsScroll);
+    heroNavScrollbar.setAttribute("aria-hidden", needsScroll ? "false" : "true");
+    if (!needsScroll) {
+      heroNavScroll.scrollTop = 0;
+      heroNavScrollThumb.style.height = "100%";
+      heroNavScrollThumb.style.top = "0";
+      return;
     }
-    setRectPx(nav, heroScene.x + relX, heroScene.y + relY, w, h);
-    return { x: heroScene.x + relX, y: heroScene.y + relY, w, h };
+    const track = heroNavScrollbar.querySelector(".hero-nav-scroll-track");
+    const trackH = track?.clientHeight || 1;
+    const thumbH = Math.max(10, (heroNavScroll.clientHeight / heroNavScroll.scrollHeight) * trackH);
+    const thumbTop =
+      maxScroll > 0 ? (heroNavScroll.scrollTop / maxScroll) * (trackH - thumbH) : 0;
+    heroNavScrollThumb.style.height = `${thumbH}px`;
+    heroNavScrollThumb.style.top = `${thumbTop}px`;
   }
+
+  function getNavFit() {
+    const raw = nav?.style.getPropertyValue("--nav-fit");
+    const parsed = Number.parseFloat(raw || "1");
+    return Number.isFinite(parsed) && parsed > 0 ? parsed : lastNavFit || 1;
+  }
+
+  function fitNavToHeight(maxHeightPx) {
+    if (!nav || maxHeightPx <= 0) return 1;
+
+    nav.style.fontSize = `${NAV_DESIGN_FONT_PX}px`;
+    nav.style.marginBottom = "0";
+    nav.style.setProperty("--nav-fit", "1");
+
+    const naturalH = nav.scrollHeight;
+    if (!naturalH) return 1;
+
+    const viewportScale = Math.min(1, scaleMin());
+    let fit = Math.min(1, viewportScale, maxHeightPx / naturalH);
+
+    if (naturalH * fit > maxHeightPx && fit < NAV_MIN_READABLE_FIT) {
+      fit = NAV_MIN_READABLE_FIT;
+    }
+
+    lastNavFit = fit;
+    nav.style.setProperty("--nav-fit", String(fit));
+    nav.style.marginBottom = `${-(naturalH * (1 - fit))}px`;
+
+    const visualH = naturalH * fit;
+    const needsScroll = visualH > maxHeightPx + 2;
+
+    if (heroNavScroll) {
+      heroNavScroll.style.maxHeight = `${maxHeightPx}px`;
+      heroNavScroll.classList.toggle("can-scroll", needsScroll);
+      if (!needsScroll) heroNavScroll.scrollTop = 0;
+    }
+
+    return fit;
+  }
+
+  function applyNavInHero(p, pDonation, footerRect) {
+    const heroEl = layers.heroBlack;
+    if (!heroEl || !nav || !heroNavShell) return null;
+
+    const leftPadPx = sx(NAV_LEFT_PAD);
+    const heroRect = heroEl.getBoundingClientRect();
+    const titleRect = layers.heroTitle?.getBoundingClientRect();
+    const footerBarRect = footerRect || resolveRect("footerBar", pDonation);
+
+    const legalGapAboveFooterPx = 4;
+    let legalBottomPx;
+    if (footerBarRect) {
+      legalBottomPx = Math.max(0, heroRect.bottom - footerBarRect.y + legalGapAboveFooterPx);
+    } else {
+      legalBottomPx = sy(lerp(NAV_IN_HERO.from.bottom, NAV_IN_HERO.to.bottom, p));
+    }
+
+    if (heroLegalLinks) {
+      heroLegalLinks.style.left = `${leftPadPx}px`;
+      heroLegalLinks.style.right = "0";
+      heroLegalLinks.style.bottom = `${legalBottomPx}px`;
+    }
+
+    const legalH = heroLegalLinks?.offsetHeight || sy(20);
+    let shellTop = sy(150);
+    if (titleRect && heroRect.height > 0) {
+      shellTop = Math.max(sy(10), titleRect.bottom - heroRect.top + sy(10));
+    }
+
+    const shellBottom = legalBottomPx + legalH + sy(NAV_LEGAL_GAP_PX);
+    heroNavShell.style.left = `${leftPadPx}px`;
+    heroNavShell.style.right = "0";
+    heroNavShell.style.top = `${shellTop}px`;
+    heroNavShell.style.bottom = `${shellBottom}px`;
+
+    const maxNavH = Math.max(sy(48), heroRect.height - shellTop - shellBottom);
+    fitNavToHeight(maxNavH);
+    updateNavScrollbar();
+
+    const navRect = nav.getBoundingClientRect();
+    return {
+      x: navRect.left,
+      y: navRect.top,
+      w: Math.max(1, navRect.width),
+      h: Math.max(1, navRect.height),
+    };
+  }
+
+  function scrollHeroNavBy(delta) {
+    if (!heroNavScroll) return;
+    heroNavScroll.scrollTop += delta;
+    updateNavScrollbar();
+  }
+
+  if (heroNavScroll) {
+    heroNavScroll.addEventListener(
+      "scroll",
+      () => {
+        if (navScrollRaf) cancelAnimationFrame(navScrollRaf);
+        navScrollRaf = requestAnimationFrame(updateNavScrollbar);
+        if (cutoutScrollRaf) cancelAnimationFrame(cutoutScrollRaf);
+        cutoutScrollRaf = requestAnimationFrame(() => updateCutout(lastCutoutIndex));
+      },
+      { passive: true }
+    );
+  }
+  heroNavScrollbar?.querySelectorAll(".hero-nav-scroll-btn").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      const dir = Number(btn.getAttribute("data-dir")) || 0;
+      scrollHeroNavBy(dir * Math.max(36, (heroNavScroll?.clientHeight || 80) * 0.35));
+    });
+  });
 
   /** Active section, or any nav row that has scrolled up beside the hero title band. */
   function resolveCutoutIndex(activeIndex) {
@@ -984,6 +1098,8 @@
 
     setOpacity(layers.nav, 0);
     setOpacity(cutout, 0);
+    if (heroNavShell) setOpacity(heroNavShell, 0);
+    if (heroLegalLinks) setOpacity(heroLegalLinks, 0);
     const articleTop = heroHeight;
     const articleHeight = Math.max(1, ribbonLineTop - articleTop);
     // In mobile, start article at section heading (menu-selected alignment).
@@ -1110,10 +1226,11 @@
     }
     applyRect("portrait", layers.portrait, pScroll);
 
-    applyNavInHero(pScroll);
+    const footerRectForNav = resolveRect("footerBar", pDonation);
+    applyNavInHero(pScroll, pDonation, footerRectForNav);
     const articleRect = resolveRect("article", pScroll);
     const articleTop = articleRect ? articleRect.y : sy(lerp(ARTICLE_TOP_FROM, ARTICLE_TOP_TO, pScroll));
-    const footerRect = resolveRect("footerBar", pDonation);
+    const footerRect = footerRectForNav || resolveRect("footerBar", pDonation);
     const footerTop = footerRect ? footerRect.y : sy(FOOTER_TOP);
     const articleHeight = Math.max(1, footerTop - articleTop);
     const dynamicArticleScrollMax = Math.max(0, articleInner.scrollHeight - articleHeight);
@@ -1166,8 +1283,15 @@
     setOpacity(layers.intro, introFade);
     setOpacity(layers.portrait, landingFade);
 
-    setOpacity(layers.nav, transformedFade);
-    setOpacity(cutout, transformedFade);
+    if (heroNavShell) {
+      setOpacity(heroNavShell, transformedFade);
+    }
+    if (heroLegalLinks) {
+      setOpacity(heroLegalLinks, transformedFade);
+      heroLegalLinks.style.pointerEvents = transformedFade > 0.12 ? "auto" : "none";
+    }
+    setOpacity(nav, 1);
+    setOpacity(cutout, 1);
     setOpacity(layers.article, transformedFade);
     document.body.classList.toggle("side-nav-visible", transformedFade > 0.12);
     if (layers.heroBlack) {
@@ -1206,7 +1330,8 @@
     articleInner.style.transform = `translateY(${revealLift - articleOffset}px)`;
 
     const activeIndex = activeSection(articleOffset, sy(articleHeight));
-    updateCutout(resolveCutoutIndex(activeIndex));
+    lastCutoutIndex = resolveCutoutIndex(activeIndex);
+    updateCutout(lastCutoutIndex);
   }
 
   navLinks.forEach((link, index) => {
@@ -1216,6 +1341,7 @@
       if (!target) return;
       event.preventDefault();
       forcedIndex = index;
+      lastCutoutIndex = index;
       updateCutout(index);
       const sectionTarget = Math.max(0, target.offsetTop);
       pageState = STATE_ARTICLE;
@@ -1266,7 +1392,7 @@
     if (!(target instanceof Element)) return false;
     return Boolean(
       target.closest(
-        "#layer-donation-forms, #layer-donation-info, #layer-status, #donation-checkout-overlay"
+        "#layer-donation-forms, #layer-donation-info, #layer-status, #donation-checkout-overlay, #hero-nav-shell, #hero-legal-links"
       )
     );
   }
